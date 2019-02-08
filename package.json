@@ -1,0 +1,23 @@
+{
+  "name": "hornet",
+  "version": "1.0.0",
+  "description": "Command line interface (CLI) building library for Node.js which supports nesting.",
+  "main": "hornet.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node.js",
+    "cli"
+  ],
+  "author": "Fredrik E. Skjelvik",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^10.12.19"
+  },
+  "dependencies": {
+    "readline-sync": "^1.4.9",
+    "typescript": "^3.3.1",
+    "typescript-require": "^0.2.10"
+  }
+}
