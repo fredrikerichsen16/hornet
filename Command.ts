@@ -7,16 +7,17 @@
  *        controllerName.methodName with only characters that are legal class and method names.
  */
 
-import {Option} from './Option';
+import {DeclaredOption} from './DeclaredOption';
 
 export class Command {
-    _name!: string;           // name of command, i.e. what user types to access the command
-    _description?: string;    // description of command, shown in the CLI to help user navigate it
-    _action!: string;         // path to method which handles the command - Format: 'controller.method'
+    _name!: string; // name of command, i.e. what user types to access the command
+    _description?: string; // description of command, shown in the CLI to help user navigate it
+    _action!: string; // path to method which handles the command - Format: 'controller.method'
     _controller!: string;
     _method!: string;
-    _options: Option[] = [];  // option such as '-l, --limit' but in a structured format
-    _sub: Command[] = [];     // sub commands
+    _options: DeclaredOption[] = []; // option such as '-l, --limit' but in a structured format
+    _sub: Command[] = []; // sub commands
+    _path: string[] = [];
 
     /**
      * Setter for _name property - name of command
@@ -59,7 +60,7 @@ export class Command {
      * @return
      */
     option(flags: string, description: string, required: boolean = false) {
-        this._options.push(new Option(flags, description, required));
+        this._options.push(new DeclaredOption(flags, description, required));
 
         return this;
     }
@@ -87,6 +88,16 @@ export class Command {
      */
     getValidFlags() {
 
+    }
+
+    static find(command : string, activeCommands : Command[]) : Command | null {
+        for(let activeCmd of activeCommands) {
+            if(command === activeCmd._name) {
+                return activeCmd;
+            }
+        }
+
+        return null;
     }
 
 

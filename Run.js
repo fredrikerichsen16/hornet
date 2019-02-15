@@ -1,98 +1,97 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Superclass of hornet with extra behind-the-scenes methods
- */
-var Run = /** @class */ (function () {
-    function Run() {
+const chalk = require('chalk');
+const find = require('lodash/find');
+const cloneDeep = require('lodash/cloneDeep');
+class Run {
+    constructor() {
+        // chalk
+        // Separator between given command, command output, and available commands
+        this.lineSeparator = '-----------------------';
+        this.optionsIncrement = '\xa0\xa0\xa0\xa0';
+        // All commands in this CLI
+        this.commands = [];
+        // Breadcrumb
+        this.breadcrumb = [];
+        // Path
+        this.path = [];
+        /**
+         * Object literal containing user-defined controllers.
+         * key: name of controller
+         * value: instance of controller class
+         *
+         * @problem
+         * I think it should be {[key: string] : controller} -- but that creates an error, investigate that
+         * (also need to import controller)
+         */
+        this.controllers = {};
+    }
+    setActiveCommand(command, addToPath = false) {
+        this.activeCommand = command;
+        this.breadcrumb.push(command);
+        // .slice() because it makes a copy. May alter this.path, but NEVER alter command._path
+        this.path = command._path.slice();
+        // @cleanup this is probably never necessary
+        if (addToPath) {
+            this.path.push(command._name);
+        }
+    }
+    getActiveCommands() {
+        let commands = this.commands;
+        let path = this.path;
+        let activeCommands = cloneDeep(commands);
+        for (let i = 0; i < path.length; i++) {
+            activeCommands = find(activeCommands, { '_name': path[i] })._sub;
+        }
+        return activeCommands;
+    }
+    printAvailableCommands(availableCommands) {
+        let self = this;
+        console.log('Available Commands:');
+        availableCommands.forEach(function (command, index) {
+            console.log(command._name);
+            if (command._options.length > 0) {
+                command._options.forEach(function (option) {
+                    process.stdout.write(self.optionsIncrement);
+                    if (option.short) {
+                        process.stdout.write('-' + option.short);
+                    }
+                    if (option.long) {
+                        if (option.short) {
+                            process.stdout.write(', ');
+                        }
+                        process.stdout.write('--' + option.long);
+                        if (option.types.length > 0) {
+                            process.stdout.write('=[' + option.types.join(':') + ']');
+                        }
+                    }
+                    process.stdout.write(' - ' + option.description);
+                    console.log('');
+                });
+            }
+            // @cleanup
+            // if(index != availableCommands.length - 1) {
+            //     console.log('...');
+            // }
+        });
+        this.printLineSeparator();
     }
     /**
-     * Take the user's input and decompose it into the command itself, and the flags.
-     * @example
-     * input: 'command-name -s --game=40 --cat=true -z --fiat'
-     * return: ['command-name', [{
-     *   'short': false, 'name': 'game', 'value': 40
-     * }, ...]]
-     * @param  input [description]
-     * @return       array - index 0: command, index 1: array of flags
+     * Clear terminal screen (like writing 'clear')
+     *
+     * @todo
+     * Now it fully clears the screen - I just want to shift up so that you can still scroll up to see
+     * what you cleared.
+     * @param command print the command if one is given. Idea is to clear the screen, then console.log the most recent
+     *                command at the top of the screen.
      */
-    Run.prototype.decompose = function (input) {
-        /**
-         * Extract command
-         */
-        var commandPattern = /^[\w-]+($|(?=\s))/; // regex to find command
-        var commandRegex = commandPattern.exec(input); // command regex
-        var command;
-        if (commandRegex) {
-            command = commandRegex[0]; // command string
-        }
-        else {
-            throw new Error('No command found.');
-        }
-        var flags = []; // instantiate array of flags object literals
-        var flagsStr = input.replace(command, '').trim(); // string of the flags only, command removed
-        console.log(flagsStr);
-        var flagsPattern = /((?<=\s)|^)-{1,2}([\w=]+)/g; // regex to find flags of any kind (-k, -k=value, --key, --key=value)
-        var flagsRegex = flagsStr.match(flagsPattern);
-        if (flagsRegex && flagsRegex.length > 0) { // if any flags were found
-            for (var _i = 0, flagsRegex_1 = flagsRegex; _i < flagsRegex_1.length; _i++) { // iterate over flags
-                var flag = flagsRegex_1[_i];
-                var pattern = void 0, result = // pattern = regex, result = result of regex
-                 void 0; // pattern = regex, result = result of regex
-                // check if it's a shortie '-g' etc.
-                pattern = /(?<=-)\w$/;
-                result = pattern.exec(flag);
-                if (result) {
-                    flags.push({
-                        'short': true,
-                        'name': result[0],
-                        'value': true
-                    });
-                    continue;
-                }
-                // check if it's a longie --key or --key=value
-                pattern = /(?<=--)\w+(=\w+)?/;
-                result = pattern.exec(flag);
-                if (result) {
-                    var flagObj = { 'short': false };
-                    var resultStr = result[0];
-                    var resultAr = resultStr.split('='); // split --key=value into ['key', 'value'] or just ['key'] if there's no value
-                    if (resultAr.length === 1) {
-                        flagObj.name = resultAr[0];
-                    }
-                    if (resultAr.length === 2) {
-                        flagObj.name = resultAr[0];
-                        var value = resultAr[1];
-                        flagObj.value = this.returnCorrectDataType(value);
-                    }
-                    flags.push(flagObj);
-                }
-            }
-        }
-        return [command, flags];
-    };
-    /**
-     * Take string and return it as the correct datatype
-     * @example
-     *   "str1" -> "str1"
-     *   "42" -> 42
-     *   true -> true
-     * @param  s [description]
-     * @return   [description]
-     */
-    Run.prototype.returnCorrectDataType = function (s) {
-        var sLower = s.toLowerCase();
-        // check if boolean
-        if (sLower === 'true' || sLower == 'false') {
-            return sLower === 'true' ? true : false;
-        }
-        // check if int
-        var result = /^(\d+)$/.test(s);
-        if (result) {
-            return parseInt(s);
-        }
-        return s;
-    };
-    return Run;
-}());
+    clearScreen(command) {
+        process.stdout.write('\x1Bc');
+        if (command)
+            console.log(chalk.bold.cyan('> ' + command));
+    }
+    printLineSeparator() {
+        console.log(chalk.white(this.lineSeparator));
+    }
+}
 exports.Run = Run;

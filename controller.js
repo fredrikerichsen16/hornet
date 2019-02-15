@@ -6,17 +6,58 @@
  * The user-defined controllers contain methods for all their stuff.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-var controller = /** @class */ (function () {
-    function controller(hornet) {
+const cmd_1 = require("./cmd");
+const chalk = require('chalk');
+const readlineSync = require('readline-sync');
+class controller {
+    constructor(hornet) {
+        /**
+         * cmd class
+         */
+        this.cmd = cmd_1.cmd;
+        this.chalk = new chalk.constructor({ level: 2 }); // level 2 = supports 256 colors rather than 16 million
         this.hornet = hornet;
     }
-    controller.prototype.printCommands = function () {
-        var commands = this.hornet.commands;
-        for (var i = 0; i < commands.length; i++) {
-            var command = commands[i];
+    printCommands() {
+        let commands = this.hornet.commands;
+        for (let i = 0; i < commands.length; i++) {
+            let command = commands[i];
             console.log(command._name);
         }
-    };
-    return controller;
-}());
+    }
+    readline(question, color, trim = true) {
+        if (color) {
+            question = this.chalk[color](question);
+        }
+        let inp = readlineSync.question(question);
+        if (trim)
+            inp = inp.trim();
+        return inp;
+    }
+    readlineYN(question, trim = true) {
+        let inp = readlineSync.question(question);
+        if (trim)
+            inp = inp.trim();
+        return inp === 'Y';
+    }
+    traverseForward() {
+        if (!this.hornet.activeCommand) {
+            throw new Error("hornet.activeCommand is undefined");
+        }
+        this.hornet.path.push(this.hornet.activeCommand._name);
+    }
+    traverseBackward() {
+        this.hornet.path.pop();
+    }
+    /**
+     * Clear terminal screen (like writing 'clear')
+     *
+     * @todo
+     * Now it fully clears the screen - I just want to shift up so that you can still scroll up to see
+     * what you cleared.
+     */
+    clearScreen() {
+        process.stdout.write('\x1Bc');
+    }
+}
 exports.controller = controller;

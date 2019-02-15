@@ -1,44 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var hornet_1 = require("./hornet");
+const hornet_1 = require("./hornet");
+const Command_1 = require("./Command");
 // controllers
-var domains_1 = require("./controllers/domains");
-var intents_1 = require("./controllers/intents");
-var authentication_1 = require("./controllers/authentication");
+const domains_1 = require("./controllers/domains");
+const intents_1 = require("./controllers/intents");
+const authentication_1 = require("./controllers/authentication");
 var CLI = new hornet_1.hornet();
 // CLI.startCommand = new command().defaultStartCommand();
-CLI.commands = [
-    new hornet_1.command()
+CLI.setCommands([
+    new Command_1.Command()
         .name('signup')
         .action('authentication.signup'),
-    new hornet_1.command()
+    new Command_1.Command()
         .name('signin', 'Sign in page')
+        .option('-a, --admin=[boolean]', 'Automatically sign in as admin.')
         .action('authentication.signin')
-        .sub(new hornet_1.command()
+        .sub(new Command_1.Command()
         .name('list-domains', 'List domains')
         .action('domains.list')
         .option('-l, --limit=[number:boolean]', 'Limit amount of results to show.', false)
-        .sub(new hornet_1.command()
+        .sub(new Command_1.Command()
         .name('create', 'Create domain')
-        .action('domains.create'), new hornet_1.command()
+        .action('domains.create'), new Command_1.Command()
         .name('domain-detail', 'Show details of one domain')
         .action('domains.detail')
         .option('-i, --index=[number]', 'Domain index to show details of')
         .option('-n, --name=[string]', 'Name of domain to show details of')
-        .sub(new hornet_1.command()
+        .sub(new Command_1.Command()
         .name('update', 'Update this domain')
         .option('-q --quick', 'Quick update')
-        .action('domains.detail_update'), new hornet_1.command()
+        .action('domains.update'), new Command_1.Command()
         .name('delete', 'Delete this domain')
-        .action('domains.detail_delete'), new hornet_1.command()
+        .action('domains.delete'), new Command_1.Command()
         .name('list-intents', 'List intents under this domain')
         .action('intents.list')
         .option('-l, --limit=[number]', 'Limit amount of results to show.', false)
-        .sub(new hornet_1.command()
+        .sub(new Command_1.Command()
         .name('intent-detail', 'Show details of one intent')
         .action('intents.detail')
         .option('-i, --index=[number]', 'Intent index to show details of')
         .option('-n, --name=[string]', 'Name of intent to show details of')))))
-];
+]);
 CLI.register(authentication_1.authentication, domains_1.domains, intents_1.intents);
 CLI.run();

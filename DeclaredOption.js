@@ -2,37 +2,18 @@
 /**
  * DeclaredOption
  */
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var Option_1 = require("./Option");
-var DeclaredOption = /** @class */ (function (_super) {
-    __extends(DeclaredOption, _super);
-    function DeclaredOption(flags, description, required) {
-        if (required === void 0) { required = false; }
-        var _this = this;
-        _this.deconstructFlags(flags);
-        _this.description = description;
-        _this.required = required;
-        return _this;
-        // console.log({
-        //     short: this.short,
-        //     long: this.long,
-        //     types: this.types,
-        //     description: this.description,
-        //     required: this.required
-        // });
+const Option_1 = require("./Option");
+class DeclaredOption extends Option_1.Option {
+    constructor(flags, description, required = false) {
+        super();
+        let returnObj = this.deconstructFlags(flags);
+        // super(returnObj.short, returnObj.long);
+        this.short = returnObj.short;
+        this.long = returnObj.long;
+        this.types = returnObj.types;
+        this.description = description;
+        this.required = required;
     }
     /**
      * @example
@@ -43,12 +24,16 @@ var DeclaredOption = /** @class */ (function (_super) {
      * @param  flags string like '-l, --limit' etc.
      * @return       void
      */
-    DeclaredOption.prototype.deconstructFlags = function (flags) {
-        var self = this;
-        var patt = /(?<=\s|^)-\w(=\[\w+\]|(?=\s)|(?=,))/;
+    deconstructFlags(flags) {
+        let self = this;
+        let returnObj = {
+            short: undefined, long: undefined,
+            types: ['boolean'] // default if no types are defined
+        };
+        var patt = /(?<=(\s|^)-)\w(=\[\w+\]|(?=\s)|(?=,))/;
         var short = patt.exec(flags);
         if (short)
-            self.short = short[0];
+            returnObj.short = short[0];
         /**
          * (?<=\s) -> positive lookbehind - checks pattern that is preceded by \s (whitespace), but
          *            doesn't include that whitespace in the returned pattern
@@ -57,22 +42,19 @@ var DeclaredOption = /** @class */ (function (_super) {
          * (=\[\w+\]|(?=\s))
          *         -> =[one-or-more-characters] OR single whitespace (positive lookahead)
          */
-        var patt = /(?<=\s|^)--\w+(=\[[\w:]+\]|(?=\s|$))/;
+        var patt = /(?<=(\s|^)--)\w+(=\[[\w:]+\]|(?=\s|$))/;
         var long = patt.exec(flags);
         if (long) {
-            self.long = long[0];
+            let longStr = returnObj.long = long[0];
             var patt = /(?<=(=\[))[\w:]+(?=(\]))/;
-            var val = patt.exec(self.long);
+            var val = patt.exec(longStr);
             if (val) {
                 var vals = val[0].split(':');
-                self.types = vals;
+                returnObj.types = vals;
             }
-            else {
-                self.types = ['boolean'];
-            }
-            self.long = self.long.replace(/=\[[[\w:]*\]/, '');
+            returnObj.long = returnObj.long.replace(/=\[[[\w:]*\]/, '');
         }
-    };
-    return DeclaredOption;
-}(Option_1.Option));
+        return returnObj;
+    }
+}
 exports.DeclaredOption = DeclaredOption;

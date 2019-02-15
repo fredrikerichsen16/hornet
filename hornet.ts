@@ -1,76 +1,115 @@
 var readlineSync = require('readline-sync');
-// import * as readline from 'readline';
 import {Command} from './Command';
 import {Option} from './Option';
 import {controller} from './controller';
 import {DefaultController} from './DefaultController';
 import {Run} from './Run';
+import {FilledOption} from './FilledOption';
+import {cmd} from './cmd';
+import * as types from './types';
 
-class hornet extends Run {
+export class hornet extends Run {
 
-    commands: Command[] = [];
-    activeCommands: Command[] = [];
-
-    /**
-     * Object literal containing user-defined controllers.
-     * key: name of controller
-     * value: instance of controller class
-     *
-     * @problem
-     * I think it should be {[key: string] : controller} -- but that creates an error, investigate that
-     */
-    controllers: {[key: string] : any} = {};
+    nextcommand ?: cmd = undefined;
 
     run() : void {
         var self = this;
-        this.activeCommands = JSON.parse(JSON.stringify(this.commands)); // deep copy (shitty solution)
 
-        let nextcommand : string | null = null;
         while(true)
         {
-            if(nextcommand)
+            if(self.nextcommand)
             {
+                /**
+                 * ! is placed after nextcommand because:
+                 * https://stackoverflow.com/questions/44147937/property-does-not-exist-on-type-never
+                 * Basically compiled assumes this code is unreachable because nextcommand is initially set
+                 * to null, so it changes its type to 'never'. ! is probably not an ideal solution.
+                 */
+                if(self.nextcommand!.command) {
+                    self.nextcommand = self.handleUserInput(self.nextcommand!.command);
+                    continue;
+                }
 
-                nextcommand = null;
+                if(self.nextcommand!.name || self.nextcommand!.action) {
+                    let obj : {name?: string, action?: string} = {};
+                    if(self.nextcommand.name) {
+                        obj.name = self.nextcommand.name;
+                    } else {
+                        obj.action = self.nextcommand.action;
+                    }
+
+                    let activeCmd = self.nextcommand.find(this.commands, obj);
+
+                    self.clearScreen();
+
+                    if(activeCmd) {
+                        self.setActiveCommand(activeCmd);
+                        self.nextcommand = this.runCommand(activeCmd, self.nextcommand.options);
+                    } else {
+                        console.log('Command not found');
+                        self.nextcommand = undefined;
+                    }
+
+                    continue;
+                }
             }
             else
             {
-                let command = readlineSync.question('>').trim(); // get user input
-                if(command === '') continue;
-
-                let commandAndFlags = self.decompose(command);
-                command = commandAndFlags[0];
-                let flags = commandAndFlags[1];
-
-                /**
-                 * Iterate over commands which are in the active domain
-                 */
-                let commandFound = false;
-                for(let activeCmd of this.activeCommands) {
-                    if(command === activeCmd._name) { // find the correct command
-                        let action : string = activeCmd._action;
-                        let actionAr : string[] = action.split('.');
-                        let controller = actionAr[0];
-                        let method = actionAr[1];
-
-                        // find valid flags
-
-                        nextcommand = self.controllers[activeCmd._controller][activeCmd._method]();
-                        commandFound = true;
-                        break;
-                    }
-                }
-
-                if(!commandFound) {
-                    console.log('Command not found');
-                }
+                self.nextcommand = self.handleUserInput();
             }
+        }
+    }
+
+    getUserInput() : string {
+        let inp : string = readlineSync.question('>').trim(); // get user input
+        if(inp === '') this.getUserInput();
+
+        return inp;
+    }
+
+    handleUserInput(userInput ?: string) : cmd | undefined {
+        let activeCommands = this.getActiveCommands();
+
+        if(!userInput) {
+            this.printAvailableCommands(activeCommands);
+            userInput = this.getUserInput();
+        }
+
+        /**
+         * Might be a better place to put this once I involve more complex return commands
+         */
+        this.clearScreen(userInput);
+
+        let [command, options] = FilledOption.decompose(userInput);
+
+        // ...
+
+        let activeCmd = Command.find(command, activeCommands);
+        if(activeCmd) {
+            this.setActiveCommand(activeCmd);
+            let validOptions = Option.validOptions(options, activeCmd._options);
+            this.nextcommand = this.runCommand(activeCmd, validOptions);
+        } else {
+            console.log('Command not found');
+        }
+
+        return this.nextcommand;
+    }
+
+    runCommand(activeCmd : Command, validOptions : types.FreeObjectLiteral = {}) : types.cmd {
+        try {
+            let nextcommand = this.controllers[activeCmd._controller][activeCmd._method](validOptions);
+            this.printLineSeparator();
+            return nextcommand;
+        } catch(e) {
+            console.log("The command you entered was valid but it either doesn't have a controller method or the controller method's signature is invalid");
+            process.exit();
         }
     }
 
     /**
      * Register controllers so they can be accessed in the property 'controllers' - a literal object with all
-     * user-defined controllers.
+     * user-defined controllers. (key = name of controller, value = user defined controller class)
      * @param  ...controllers controller classes (must be subclass of controller)
      * @return                void
      *
@@ -80,59 +119,34 @@ class hornet extends Run {
      * register(...controllers : controller[]): void {
      */
     register(...controllers : any[]): void {
-        var self = this;
-
-        for(let cont of controllers) {
-            if(cont.name === 'DEFAULT') {
+        for(let controller of controllers) {
+            if(controller.name === 'DEFAULT')
                 throw new Error('"DEFAULT" is a reserved controller name, use a different name.');
-            }
-            self.controllers[cont.name] = <controller> new cont(self);
+
+            this.controllers[controller.name] = <controller> new controller(this);
         }
 
-        self.controllers['DEFAULT'] = <controller> new DefaultController(self);
+        this.controllers['DEFAULT'] = <controller> new DefaultController(this);
     }
 
+    setCommands(commands : Command[]) {
+        this.commands = commands;
+        this.addPath(commands);
+    }
+
+    /**
+     * Recursive function to add array with path to this particular object (i.e. the sequence of keys to access the object)
+     * @relatesto setCommands
+     * @todo Maybe make it more general form so I can reuse it on different nested arrays of objects. For now, though,
+     * I only need it on commands
+     */
+    addPath(commands : Command[], path : string[] = []) : any {
+        for(let i = 0, len = commands.length; i < len; i++) {
+            let command = commands[i];
+            command._path = path;
+            if(command.hasOwnProperty('_sub') && command._sub !== []) {
+                this.addPath(command._sub, path.concat([command._name]));
+            }
+        }
+    }
 }
-
-export {hornet, Command as command};
-
-/*
-
-def start(self):
-		# self.connect_to_db()
-		nextcommand = self.first_func
-
-		while True:
-			command = nextcommand or input()
-			if command.strip() == '':
-				continue
-
-			command, params = self.split_command_and_params(command)
-			commands = self.get_current_context_commands()
-
-			try:
-				command_dict = next(c for c in commands if c['command'] == command)
-			except StopIteration:
-				# Is thrown if next() is passed an empty list, i.e. the user inputted a non-existent command
-				print('No such command as "{}"'.format(command))
-				continue
-
-			if command_dict:
-				self.add_to_breadcrumb(command_dict)
-				print(self.breadcrumb)
-
-				try:
-					command_method = getattr(self, command_dict['func'])
-				except AttributeError:
-					# Is thrown if the method doesn't exist
-					print('No such method ({}) exists. Create one!'.format(command_dict['func']))
-					continue
-			else:
-				print('Command not found.')
-				continue
-
-			self.clearscreen()
-			print('Command: {}\nDescription: {}\n'.format(command, command_dict['description']))
-			nextcommand = command_method(*params)
-
-*/

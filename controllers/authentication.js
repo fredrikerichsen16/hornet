@@ -1,34 +1,27 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var controller_1 = require("../controller");
-var authentication = /** @class */ (function (_super) {
-    __extends(authentication, _super);
-    function authentication(hornet) {
-        var _this = _super.call(this, hornet) || this;
-        _this.name = 'authentication';
-        return _this;
+const controller_1 = require("../controller");
+class authentication extends controller_1.controller {
+    constructor(hornet) {
+        super(hornet);
+        this.name = 'authentication';
     }
-    authentication.prototype.signin = function () {
-        console.log('SIGN IN!!!');
-        return 'signup';
-    };
-    authentication.prototype.signup = function () {
-        console.log('Sign UP!');
-        return null;
-    };
-    return authentication;
-}(controller_1.controller));
+    signin(options) {
+        if (options.admin) {
+            console.log('You signed in as admin');
+        }
+        else {
+            let username = this.readline('Username: ', 'green');
+            let password = this.readline('Password: ', 'cyan');
+            console.log(`You just signed in with the username ${username}`);
+        }
+        this.traverseForward();
+    }
+    signup(options) {
+        let username = this.readline('Username: ');
+        let password = this.readline('Password: ');
+        console.log('Signed up!');
+        this.traverseForward();
+    }
+}
 exports.authentication = authentication;

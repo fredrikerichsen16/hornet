@@ -8,6 +8,13 @@ import {hornet} from '../hornet';
 
 export class DefaultController extends controller {
 
+    /**
+     * @todo
+     * Default controller method calls generally shouldn't be tracked in the breadcrumb or the path.
+     * Because then 'back' and traverseBack etc. are not reliable.
+     * So add that functionality either in this class somehow or hornet.ts.
+     */
+
     constructor(hornet: hornet) {
         super(hornet);
     }
@@ -17,8 +24,20 @@ export class DefaultController extends controller {
      */
     name: string = 'DEFAULT';
 
+    /**
+     * Go back to the previous command that was run
+     * @return [description]
+     */
     back() : string {
         return 'back';
+    }
+
+    /**
+     * Run the parent command of the current command
+     * @return [description]
+     */
+    traverseBack() {
+        return 'traverseBack';
     }
 
 }

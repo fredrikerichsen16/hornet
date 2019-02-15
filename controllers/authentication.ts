@@ -9,16 +9,25 @@ export class authentication extends controller {
 
     name: string = 'authentication';
 
-    signin() {
-        console.log('SIGN IN!!!');
+    signin(options : any) {
+        if(options.admin) {
+            console.log('You signed in as admin');
+        } else {
+            let username = this.readline('Username: ', 'green');
+            let password = this.readline('Password: ', 'cyan');
 
-        return 'signup';
+            console.log(`You just signed in with the username ${username}`);
+        }
+
+        this.traverseForward();
     }
 
-    signup() {
-        console.log('Sign UP!');
+    signup(options : any) {
+        let username = this.readline('Username: ');
+        let password = this.readline('Password: ');
 
-        return null;
+        console.log('Signed up!');
+        this.traverseForward();
     }
 
 }

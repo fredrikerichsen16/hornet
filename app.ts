@@ -1,4 +1,5 @@
-import {hornet, command} from "./hornet";
+import {hornet} from "./hornet";
+import {Command as command} from "./Command";
 
 // controllers
 import {domains} from './controllers/domains';
@@ -9,13 +10,14 @@ var CLI = new hornet();
 
 // CLI.startCommand = new command().defaultStartCommand();
 
-CLI.commands = [
+CLI.setCommands([
     new command()
     .name('signup')
     .action('authentication.signup'),
 
     new command()
     .name('signin', 'Sign in page')
+    .option('-a, --admin=[boolean]', 'Automatically sign in as admin.')
     .action('authentication.signin')
     .sub(
         new command()
@@ -36,11 +38,11 @@ CLI.commands = [
                 new command()
                 .name('update', 'Update this domain')
                 .option('-q --quick', 'Quick update')
-                .action('domains.detail_update'),
+                .action('domains.update'),
 
                 new command()
                 .name('delete', 'Delete this domain')
-                .action('domains.detail_delete'),
+                .action('domains.delete'),
 
                 new command()
                 .name('list-intents', 'List intents under this domain')
@@ -56,7 +58,7 @@ CLI.commands = [
             )
         )
     )
-];
+]);
 
 CLI.register(authentication, domains, intents);
 

@@ -3,34 +3,35 @@
  * Default Controller for default commands which the user doesn't have to implement
  * himself. Commands like 'back'.
  */
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var controller_1 = require("./controller");
-var DefaultController = /** @class */ (function (_super) {
-    __extends(DefaultController, _super);
-    function DefaultController(hornet) {
-        var _this = _super.call(this, hornet) || this;
+const controller_1 = require("./controller");
+class DefaultController extends controller_1.controller {
+    /**
+     * @todo
+     * Default controller method calls generally shouldn't be tracked in the breadcrumb or the path.
+     * Because then 'back' and traverseBack etc. are not reliable.
+     * So add that functionality either in this class somehow or hornet.ts.
+     */
+    constructor(hornet) {
+        super(hornet);
         /**
          * Name of controller (could take name of class, but if code is minified that doesn't work)
          */
-        _this.name = 'DEFAULT';
-        return _this;
+        this.name = 'DEFAULT';
     }
-    DefaultController.prototype.back = function () {
+    /**
+     * Go back to the previous command that was run
+     * @return [description]
+     */
+    back() {
         return 'back';
-    };
-    return DefaultController;
-}(controller_1.controller));
+    }
+    /**
+     * Run the parent command of the current command
+     * @return [description]
+     */
+    traverseBack() {
+        return 'traverseBack';
+    }
+}
 exports.DefaultController = DefaultController;

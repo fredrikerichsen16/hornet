@@ -1,103 +1,125 @@
 /**
  * Superclass of hornet with extra behind-the-scenes methods
  */
+import {Command} from './Command';
+
+const chalk = require('chalk');
+const find = require('lodash/find');
+const cloneDeep = require('lodash/cloneDeep');
+
 export class Run {
+
+    // chalk
+
+    // Separator between given command, command output, and available commands
+    lineSeparator : string = '-----------------------';
+
+    optionsIncrement : string = '\xa0\xa0\xa0\xa0';
+
+    // current command being run
+    activeCommand?: Command;
+
+    // All commands in this CLI
+    commands: Command[] = [];
+
+    // Breadcrumb
+    breadcrumb: Command[] = [];
+
+    // Path
+    path: string[] = [];
+
     /**
-     * Take the user's input and decompose it into the command itself, and the flags.
-     * @example
-     * input: 'command-name -s --game=40 --cat=true -z --fiat'
-     * return: ['command-name', [{
-     *   'short': false, 'name': 'game', 'value': 40
-     * }, ...]]
-     * @param  input [description]
-     * @return       array - index 0: command, index 1: array of flags
+     * Object literal containing user-defined controllers.
+     * key: name of controller
+     * value: instance of controller class
+     *
+     * @problem
+     * I think it should be {[key: string] : controller} -- but that creates an error, investigate that
+     * (also need to import controller)
      */
-    decompose(input : string)
-    {
-        /**
-         * Extract command
-         */
-        let commandPattern = /^[\w-]+($|(?=\s))/; // regex to find command
-        let commandRegex = commandPattern.exec(input); // command regex
-        let command;
-        if(commandRegex) {
-            command = commandRegex[0]; // command string
-        } else {
-            throw new Error('No command found.');
+    controllers: {[key: string] : any} = {};
+
+    setActiveCommand(command : Command, addToPath : boolean = false) {
+        this.activeCommand = command;
+        this.breadcrumb.push(command);
+        // .slice() because it makes a copy. May alter this.path, but NEVER alter command._path
+        this.path = command._path.slice();
+
+        // @cleanup this is probably never necessary
+        if(addToPath) {
+            this.path.push(command._name);
+        }
+    }
+
+    getActiveCommands() : Command[] {
+        let commands = this.commands;
+        let path = this.path;
+
+        let activeCommands = cloneDeep(commands);
+
+        for(let i = 0; i < path.length; i++) {
+            activeCommands = find(activeCommands, {'_name': path[i]})._sub;
         }
 
-        let flags = []; // instantiate array of flags object literals
-        let flagsStr = input.replace(command, '').trim(); // string of the flags only, command removed
-        console.log(flagsStr);
+        return activeCommands;
+    }
 
-        let flagsPattern = /((?<=\s)|^)-{1,2}([\w=]+)/g; // regex to find flags of any kind (-k, -k=value, --key, --key=value)
-        let flagsRegex = flagsStr.match(flagsPattern);
-        if(flagsRegex && flagsRegex.length > 0) { // if any flags were found
-            for(let flag of flagsRegex) { // iterate over flags
-                let pattern, result; // pattern = regex, result = result of regex
+    printAvailableCommands(availableCommands : Command[]) : void {
+        let self = this;
 
-                // check if it's a shortie '-g' etc.
-                pattern = /(?<=-)\w$/;
-                result = pattern.exec(flag);
-                if(result) {
-                    flags.push({
-                        'short': true,
-                        'name': result[0],
-                        'value': true
-                    });
+        console.log('Available Commands:');
 
-                    continue;
-                }
+        availableCommands.forEach(function(command, index) {
+            console.log(command._name);
 
-                // check if it's a longie --key or --key=value
-                pattern = /(?<=--)\w+(=\w+)?/;
-                result = pattern.exec(flag);
-                if(result) {
-                    let flagObj: {[key: string]: any} = {'short': false};
-                    let resultStr = result[0];
-                    let resultAr = resultStr.split('='); // split --key=value into ['key', 'value'] or just ['key'] if there's no value
-
-                    if(resultAr.length === 1) {
-                        flagObj.name = resultAr[0];
+            if(command._options.length > 0) {
+                command._options.forEach(function(option) {
+                    process.stdout.write(self.optionsIncrement);
+                    if(option.short) {
+                        process.stdout.write('-' + option.short);
                     }
-                    if(resultAr.length === 2) {
-                        flagObj.name = resultAr[0];
+                    if(option.long) {
+                        if(option.short) {
+                            process.stdout.write(', ');
+                        }
+                        process.stdout.write('--' + option.long);
 
-                        let value = resultAr[1];
-                        flagObj.value = this.returnCorrectDataType(value);
+                        if(option.types.length > 0) {
+                            process.stdout.write('=[' + option.types.join(':') + ']');
+                        }
                     }
-                    flags.push(flagObj);
-                }
+
+                    process.stdout.write(' - ' + option.description);
+
+                    console.log('');
+                });
             }
-        }
 
-        return [command, flags];
+            // @cleanup
+            // if(index != availableCommands.length - 1) {
+            //     console.log('...');
+            // }
+        });
+
+        this.printLineSeparator();
     }
 
     /**
-     * Take string and return it as the correct datatype
-     * @example
-     *   "str1" -> "str1"
-     *   "42" -> 42
-     *   true -> true
-     * @param  s [description]
-     * @return   [description]
+     * Clear terminal screen (like writing 'clear')
+     *
+     * @todo
+     * Now it fully clears the screen - I just want to shift up so that you can still scroll up to see
+     * what you cleared.
+     * @param command print the command if one is given. Idea is to clear the screen, then console.log the most recent
+     *                command at the top of the screen.
      */
-    returnCorrectDataType(s : string)
-    {
-        let sLower = s.toLowerCase();
-
-        // check if boolean
-        if(sLower === 'true' || sLower == 'false') {
-            return sLower === 'true' ? true : false;
-        }
-
-        // check if int
-        let result = /^(\d+)$/.test(s);
-        if(result) {
-            return parseInt(s);
-        }
-
-        return s;
+    clearScreen(command ?: string) : void {
+        process.stdout.write('\x1Bc');
+        if(command) console.log(chalk.bold.cyan('> ' + command));
     }
+
+    printLineSeparator() {
+        console.log(chalk.white(this.lineSeparator));
+    }
+
 }
