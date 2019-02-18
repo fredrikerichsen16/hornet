@@ -1,5 +1,5 @@
-import {controller} from '../controller';
-import {hornet} from '../hornet';
+import {controller} from '../controller/controller';
+import {hornet} from '../main/hornet';
 
 export class authentication extends controller {
 

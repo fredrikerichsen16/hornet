@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const hornet_1 = require("./hornet");
-const Command_1 = require("./Command");
+const hornet_1 = require("./main/hornet");
+const Command_1 = require("./command/Command");
 // controllers
 const domains_1 = require("./controllers/domains");
 const intents_1 = require("./controllers/intents");
 const authentication_1 = require("./controllers/authentication");
 var CLI = new hornet_1.hornet();
-// CLI.startCommand = new command().defaultStartCommand();
+require('./node/mongoose/app')();
 CLI.setCommands([
     new Command_1.Command()
         .name('signup')

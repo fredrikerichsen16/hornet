@@ -1,54 +1,77 @@
-const find = require('lodash/find');
-const cloneDeep = require('lodash/cloneDeep');
+require('./node/mongoose/app')();
+let rootRequire = require('root-require');
+let CompanyType = rootRequire('node/mongoose/models/companyTypes');
+let Domain = rootRequire('node/mongoose/models/domains');
 
-var obj = [
-    {
-        'name': 'gregers',
-        'sub': [
-            {
-                'name': 'jonas',
-                'sub': [
-                    {
-                        'name': 'thomas'
-                    },
-                    {
-                        'name': 'kristoffer'
-                    }
-                ]
-            },
-            {
-                'name': 'sebastian',
-                'sub': [
-                    {
-                        'name': 'johannes'
-                    },
-                    {
-                        'name': 'petter'
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        'name': 'morten'
-    },
-    {
-        'name': 'edvard',
-        'sub': [
-            {
-                'name': 'ed'
-            }
-        ]
+const promise = new Promise((resolve, reject) => {
+    Domain.find({}, function(err : any, domains : any) {
+        resolve(domains);
+    });
+});
+promise.then((res : any) => {
+    for(let item of res) {
+        console.log(item.name);
     }
-];
+});
+promise.catch((err) => {
+    console.log(err);
+});
 
-var family = cloneDeep(obj);
 
-var a = find(family, {'name': 'gregers'}).sub;
-var b = find(a, {'name': 'jonas'}).sub;
-var c = find(b, {'name': 'thomas'});
 
-console.log(JSON.stringify(c));
+
+
+// const find = require('lodash/find');
+// const cloneDeep = require('lodash/cloneDeep');
+//
+// var obj = [
+//     {
+//         'name': 'gregers',
+//         'sub': [
+//             {
+//                 'name': 'jonas',
+//                 'sub': [
+//                     {
+//                         'name': 'thomas'
+//                     },
+//                     {
+//                         'name': 'kristoffer'
+//                     }
+//                 ]
+//             },
+//             {
+//                 'name': 'sebastian',
+//                 'sub': [
+//                     {
+//                         'name': 'johannes'
+//                     },
+//                     {
+//                         'name': 'petter'
+//                     }
+//                 ]
+//             }
+//         ]
+//     },
+//     {
+//         'name': 'morten'
+//     },
+//     {
+//         'name': 'edvard',
+//         'sub': [
+//             {
+//                 'name': 'ed'
+//             }
+//         ]
+//     }
+// ];
+//
+// var family = cloneDeep(obj);
+//
+// var a = find(family, {'name': 'gregers'}).sub;
+// var b = find(a, {'name': 'jonas'}).sub;
+// var c = find(b, {'name': 'thomas'});
+//
+// console.log(JSON.stringify(c));
 
 //
 // function makePath(obj : any, path : string[] = []) {

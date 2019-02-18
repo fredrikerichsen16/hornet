@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const controller_1 = require("../controller");
+const controller_1 = require("../controller/controller");
 class intents extends controller_1.controller {
     constructor(hornet) {
         super(hornet);

@@ -1,6 +1,10 @@
-import {controller} from '../controller';
-import {hornet} from '../hornet';
-import {FreeObjectLiteral} from '../types';
+import {controller} from '../controller/controller';
+import {hornet} from '../main/hornet';
+import {FreeObjectLiteral} from '../main/types';
+
+let rootRequire = require('root-require');
+let CompanyType = rootRequire('node/mongoose/models/companyTypes');
+let Domain = rootRequire('node/mongoose/models/domains');
 
 var includes = require('lodash/includes');
 
@@ -19,13 +23,28 @@ export class domains extends controller {
 
     domains: string[] = ['greetings', 'booking', 'contact'];
 
-    list() {
-        console.log('Domains:');
-        this.domains.forEach(function(domain) {
-            console.log(domain);
-        });
+    async list() {
+        new Promise((resolve, reject) => {
+            Domain.find({}).then(function(domains : any) {
+                console.log('Hei');
+                process.exit();
+                resolve(domains);
+            });
+        })
+        .then((res : any) => {
+            for(let item of res) {
+                console.log(item.name);
+            }
 
-        this.traverseForward();
+            this.traverseForward();
+
+            process.exit();
+            return;
+        })
+        .catch((err) => {
+            console.log(err);
+            process.exit();
+        });
     }
 
     create() {

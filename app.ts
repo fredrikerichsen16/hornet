@@ -1,5 +1,5 @@
-import {hornet} from "./hornet";
-import {Command as command} from "./Command";
+import {hornet} from "./main/hornet";
+import {Command as command} from "./command/Command";
 
 // controllers
 import {domains} from './controllers/domains';
@@ -8,7 +8,7 @@ import {authentication} from './controllers/authentication';
 
 var CLI = new hornet();
 
-// CLI.startCommand = new command().defaultStartCommand();
+require('./node/mongoose/app')();
 
 CLI.setCommands([
     new command()
