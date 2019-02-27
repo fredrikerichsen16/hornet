@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const controller_1 = require("../controller/controller");
 let rootRequire = require('root-require');
@@ -20,31 +12,7 @@ class domains extends controller_1.controller {
          * Name of controller (could take name of class, but if code is minified that doesn't work)
          */
         this.name = 'domains';
-        // ...
-        this.domains = ['greetings', 'booking', 'contact'];
-    }
-    list() {
-        return __awaiter(this, void 0, void 0, function* () {
-            new Promise((resolve, reject) => {
-                Domain.find({}).then(function (domains) {
-                    console.log('Hei');
-                    process.exit();
-                    resolve(domains);
-                });
-            })
-                .then((res) => {
-                for (let item of res) {
-                    console.log(item.name);
-                }
-                this.traverseForward();
-                process.exit();
-                return;
-            })
-                .catch((err) => {
-                console.log(err);
-                process.exit();
-            });
-        });
+        this.domains = [];
     }
     create() {
         let domain = this.readline('Insert domain name to add: ').trim();
@@ -69,13 +37,32 @@ class domains extends controller_1.controller {
                 console.log(`Couldn't find domain ${name}.`);
                 let newName = this.readline("Try to input a different domain name or type 'exit' to go back.");
                 if (newName === 'exit') {
-                    return new this.cmd({ 'command': 'domain-detail' });
+                    return new this.cmd({ 'command': 'list-domains' });
                 }
                 else {
                     this.detail({ 'name': newName });
                 }
             }
         }
+        else {
+            console.log('No name passed.');
+            return new this.cmd({ 'command': 'list-domains' });
+        }
+    }
+    async list() {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            console.log('Loading...');
+            setTimeout(async () => {
+                var domains = await Domain.find({});
+                for (let domain of domains) {
+                    self.domains.push(domain.name);
+                    console.log(domain.name);
+                }
+                self.traverseForward();
+                resolve(undefined);
+            }, 2000);
+        });
     }
     delete(options) {
         return new this.cmd({ 'name': 'signin' });

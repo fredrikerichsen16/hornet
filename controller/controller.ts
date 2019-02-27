@@ -35,6 +35,9 @@ export abstract class controller {
      */
     cmd : typeof cmd = cmd;
 
+    /**
+     * chalk object for colored text
+     */
     chalk = new chalk.constructor({level: 2}); // level 2 = supports 256 colors rather than 16 million
 
     constructor(hornet: hornet) {
@@ -50,7 +53,7 @@ export abstract class controller {
 
     /**
      * Remove last breadcrumb in the trail
-     * 
+     *
      * Pop this.breadcrumb so that the current command isn't counted as a "real" command that the user can
      * go "back" to. The default command "back" is a good example. You should not be able to go back to "back".
      * @return [description]
@@ -76,7 +79,7 @@ export abstract class controller {
     }
 
     /**
-     * Same as readline, but returns boolean. True if 'Y', false if anything else.
+     * Same as readline, but returns boolean. True if 'Y', else false
      * @param  question
      * @param  trim
      * @return boolean

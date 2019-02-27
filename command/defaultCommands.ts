@@ -1,3 +1,7 @@
+/**
+ * Define default commands
+ */
+
 import {Command as command} from "./Command";
 
 let defaultController = 'DEFAULT';

@@ -30,10 +30,17 @@ class cmd {
             }
         }
     }
+    /**
+     * Find the actual command object (Command class) corresponding to a cmd object.
+     * @param  commands Command[] - List of commands to search
+     * @param  obj      Object containing search parameters. Either the name of
+     *                  the command or the action ("controllerName.methodName")
+     * @return          Command
+     */
     find(commands, obj) {
         let self = this;
         let searchBy = obj.name ? 'name' : 'action';
-        var flattenedCommands = helperFunctions_1.flat(commands, '_sub');
+        var flattenedCommands = helperFunctions_1.flatten(commands, '_sub');
         for (let activeCmd of flattenedCommands) {
             if (searchBy === 'name' && activeCmd._name === obj.name) {
                 return activeCmd;
@@ -42,6 +49,7 @@ class cmd {
                 return activeCmd;
             }
         }
+        return undefined;
     }
 }
 exports.cmd = cmd;

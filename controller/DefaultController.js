@@ -26,8 +26,14 @@ class DefaultController extends controller_1.controller {
     back(options) {
         if (options.hasOwnProperty('previous') && options.previous) {
             this.removeBreadcrumb(); // remove the command user was on when they wrote "back"
-            var toCommand = this.hornet.breadcrumb[this.hornet.breadcrumb.length - 1];
-            return new this.cmd({ 'name': toCommand._name });
+            try {
+                var toCommand = this.hornet.breadcrumb[this.hornet.breadcrumb.length - 1];
+                return new this.cmd({ 'name': toCommand._name });
+            }
+            catch (e) {
+                this.hornet.path = [];
+                return undefined;
+            }
         }
         else if (options.hasOwnProperty('start') && options.start) {
             this.hornet.path = [];
@@ -37,13 +43,6 @@ class DefaultController extends controller_1.controller {
             this.hornet.path.pop();
             return undefined;
         }
-    }
-    /**
-     * Run the parent command of the current command
-     * @return [description]
-     */
-    traverseBack() {
-        return 'traverseBack';
     }
 }
 exports.DefaultController = DefaultController;

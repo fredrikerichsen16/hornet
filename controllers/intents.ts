@@ -12,12 +12,4 @@ export class intents extends controller {
      */
     name: string = 'intents';
 
-    list() {
-
-    }
-
-    detail() {
-
-    }
-
 }

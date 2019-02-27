@@ -1,25 +1,110 @@
+// function scaryClown() {
+//     // setTimeout(() => {
+//     //     console.log('After 2 sec');
+//     //
+//     //     return 'BOOM';
+//     // }, 2000);
+//
+//     return new Promise(resolve => {
+//         setTimeout(() => {
+//             console.log('heisann');
+//             resolve('🤡');
+//         }, 2000);
+//     });
+// }
+//
+// async function msg() {
+//     const msg = await scaryClown();
+//     console.log('Message:', msg);
+//     console.log(typeof msg);
+// }
+//
+// msg();
+//
+// console.log('hei');
+
 require('./node/mongoose/app')();
 let rootRequire = require('root-require');
 let CompanyType = rootRequire('node/mongoose/models/companyTypes');
 let Domain = rootRequire('node/mongoose/models/domains');
 
-const promise = new Promise((resolve, reject) => {
-    Domain.find({}, function(err : any, domains : any) {
-        resolve(domains);
-    });
-});
-promise.then((res : any) => {
-    for(let item of res) {
-        console.log(item.name);
+class Hei {
+
+    async get() {
+        // Domain.find({}, function(err : any, domains : any) {
+        //     return domains;
+        // });
+
+        setTimeout(async () => {
+            var domains = await Domain.findOne({});
+            return domains;
+        }, 2000);
+
+        // const promise = new Promise((resolve, reject) => {
+        //     Domain.find({}, function(err : any, domains : any) {
+        //         resolve(domains);
+        //     });
+        // });
+        // promise.then((res : any) => {
+        //     console.log(res);
+        //     return [res, null];
+        // });
+        // promise.catch((err) => {
+        //     return [null, err];
+        // });
     }
-});
-promise.catch((err) => {
-    console.log(err);
-});
 
+    async do() {
+        // return new Promise(async (resolve, reject) => {
+        //     setTimeout(async () => {
+        //         let domain = await Domain.findOne({});
+        //         console.log(domain.name);
+        //         resolve(domain.name);
+        //     }, 1000);
+        // });
 
+        let domain = await Domain.findOne({});
+        console.log(domain.name);
+        return domain.name;
 
+        // return new Promise((resolve) => {
+        //     setTimeout(async () => {
+        //         var domain = await Domain.findOne({});
+        //         console.log('Domain.');
+        //         resolve(domain.name);
+        //     }, 1000);
+        // });
 
+        // let domain : any = Domain.findOne({})
+        //     .then((res : any) => {
+        //         return res;
+        //     }).catch((error : any) => {
+        //         return error;
+        //     });
+    }
+
+}
+
+async function main() {
+    var H = new Hei();
+    console.log('pre');
+    var result = await H.do();
+
+    console.log('result');
+    console.log(result);
+    console.log('post result');
+
+    return result;
+}
+
+(function a() {
+    b();
+})();
+
+function b() {
+    console.log('-------------------------');
+    var z = main();
+}
 
 // const find = require('lodash/find');
 // const cloneDeep = require('lodash/cloneDeep');

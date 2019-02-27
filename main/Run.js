@@ -23,11 +23,8 @@ class Run {
          * key: name of controller
          * value: instance of controller class
          *
-         * @problem
-         * I think it should be {[key: string] : controller} -- but that creates an error, investigate that
-         * (also need to import controller)
-         *
-         * {[key: string] : any} = no error, ': controller' = error
+         * Type should be : controller but that causes some problems. Tried fixing,
+         * didn't work. 'any' will probably do.
          */
         this.controllers = {};
     }
@@ -36,8 +33,8 @@ class Run {
         if (command._name === 'back' && command._controller === 'DEFAULT')
             return; // @temporary
         this.breadcrumb.push(command);
-        // .slice() because it makes a copy. May alter this.path, but NEVER alter command._path
-        this.path = command._path.slice();
+        this.path = command._path.slice(); // .slice() because it makes a copy.
+        // May alter this.path, but NEVER alter command._path
         // @cleanup this is probably never necessary
         if (addToPath) {
             this.path.push(command._name);
@@ -50,6 +47,11 @@ class Run {
     getAllCommands() {
         return this.commands.concat(this.defaultCommands);
     }
+    /**
+     * Get the commands available for the user to use at the current level of nesting
+     * @param  withDefault boolean = true - If true, include default commands
+     * @return             Command[]
+     */
     getActiveCommands(withDefault = true) {
         let commands = this.commands;
         let path = this.path;
@@ -68,6 +70,10 @@ class Run {
         }
         return activeCommands;
     }
+    /**
+     * Print available commands
+     * @param availableCommands - Command[] - Print these commands if given.
+     */
     printAvailableCommands(availableCommands) {
         let self = this;
         if (!availableCommands) {
@@ -75,7 +81,8 @@ class Run {
         }
         console.log('Available Commands:');
         availableCommands.forEach(function (command, index) {
-            if (command._name === 'back' && self.path.length === 0) {
+            // Don't print the default command 'back' if it's the first command
+            if (command._name === 'back' && self.path.length === 0 && self.breadcrumb.length === 0) {
                 return;
             }
             console.log(command._name);
@@ -103,15 +110,10 @@ class Run {
     }
     /**
      * Clear terminal screen (like writing 'clear')
-     *
-     * @todo
-     * Now it fully clears the screen - I just want to shift up so that you can still scroll up to see
-     * what you cleared.
-     * @param command print the command if one is given. Idea is to clear the screen, then console.log the most recent
-     *                command at the top of the screen.
      */
     clearScreen(command) {
-        process.stdout.write('\x1Bc');
+        process.stdout.write('\u001B[2J\u001B[0;0f');
+        // process.stdout.write('\x1Bc');
         if (command)
             console.log(chalk.bold.cyan('> ' + command));
     }

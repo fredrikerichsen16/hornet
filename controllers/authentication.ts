@@ -12,14 +12,19 @@ export class authentication extends controller {
     signin(options : any) {
         if(options.admin) {
             console.log('You signed in as admin');
+            return this.traverseForward();
         } else {
             let username = this.readline('Username: ', 'green');
             let password = this.readline('Password: ', 'cyan');
 
-            console.log(`You just signed in with the username ${username}`);
-        }
+            if(username !== 'a' || password !== 'a') {
+                console.log('Wrong password.');
+                return;
+            }
 
-        this.traverseForward();
+            console.log(`You just signed in with the username ${username}`);
+            return this.traverseForward();
+        }
     }
 
     signup(options : any) {

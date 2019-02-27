@@ -15,6 +15,9 @@ class controller {
          * cmd class
          */
         this.cmd = cmd_1.cmd;
+        /**
+         * chalk object for colored text
+         */
         this.chalk = new chalk.constructor({ level: 2 }); // level 2 = supports 256 colors rather than 16 million
         this.hornet = hornet;
     }
@@ -57,7 +60,7 @@ class controller {
         return inp;
     }
     /**
-     * Same as readline, but returns boolean. True if 'Y', false if anything else.
+     * Same as readline, but returns boolean. True if 'Y', else false
      * @param  question
      * @param  trim
      * @return boolean

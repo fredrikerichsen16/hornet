@@ -9,9 +9,5 @@ class intents extends controller_1.controller {
          */
         this.name = 'intents';
     }
-    list() {
-    }
-    detail() {
-    }
 }
 exports.intents = intents;

@@ -17,8 +17,8 @@ export class hornet extends Run {
 
     nextcommand ?: cmd = undefined;
 
-    run() : void {
-        var self = this;
+    async run() {
+        let self = this;
 
         while(true)
         {
@@ -30,11 +30,11 @@ export class hornet extends Run {
                  * Basically compiled assumes this code is unreachable because nextcommand is initially set
                  * to null, so it changes its type to 'never'. ! is probably not an ideal solution.
                  */
-                if(self.nextcommand!.command)
+                if(self.nextcommand.command)
                 {
-                    self.nextcommand = self.handleUserInput(self.nextcommand!.command);
+                    self.handleUserInput(self.nextcommand.command);
                 }
-                else if(self.nextcommand!.name || self.nextcommand!.action)
+                else if(self.nextcommand.name || self.nextcommand.action)
                 {
                     let obj : {name?: string, action?: string} = {};
                     if(self.nextcommand.name) {
@@ -42,26 +42,27 @@ export class hornet extends Run {
                     } else if(self.nextcommand.action) {
                         obj.action = self.nextcommand.action;
                     } else {
-                        console.log('Nextcommand error. #2');
+                        console.log('Nextcommand error. Error #3124');
                         process.exit();
                     }
 
                     let activeCmd = self.nextcommand.find(this.getAllCommands(), obj);
 
-                    self.clearScreen();
-
-                    if(activeCmd) {
-                        self.setActiveCommand(activeCmd);
-                        self.nextcommand = this.runCommand(activeCmd, self.nextcommand.options);
-                    } else {
-                        console.log('Command not found');
-                        self.nextcommand = undefined;
+                    if(!activeCmd) {
+                        console.log('Command not found.');
+                        process.exit();
                     }
+
+                    await this.runCommand(activeCmd, self.nextcommand.options, undefined, undefined);
+                }
+                else
+                {
+                    self.nextcommand = undefined;
                 }
             }
             else
             {
-                self.nextcommand = self.handleUserInput();
+                await self.handleUserInput();
             }
         }
     }
@@ -73,7 +74,9 @@ export class hornet extends Run {
         return inp;
     }
 
-    handleUserInput(userInput ?: string) : cmd | undefined {
+    async handleUserInput(userInput ?: string) {
+        let self = this;
+
         let activeCommands = this.getActiveCommands();
 
         if(!userInput) {
@@ -87,38 +90,26 @@ export class hornet extends Run {
 
         let activeCmd = Command.find(command, activeCommands);
 
-        /**
-         * Might be a better place to put this once I involve more complex return commands
-         */
+        await this.runCommand(activeCmd, undefined, options, userInput);
+    }
+
+    async runCommand(activeCmd ?: Command, validOptions : types.FreeObjectLiteral = {}, options ?: FilledOption[], userInput ?: string) {
+        let self = this;
+
         this.clearScreen(userInput);
 
         if(activeCmd) {
             this.setActiveCommand(activeCmd);
-            let validOptions = Option.validOptions(options, activeCmd._options);
-            this.nextcommand = this.runCommand(activeCmd, validOptions);
+            if(options) {
+                validOptions = Option.validOptions(options, activeCmd._options);
+            }
+
+            this.nextcommand = await this.controllers[activeCmd._controller][activeCmd._method](validOptions);
+            this.printLineSeparator();
         } else {
             console.log('Command not found');
+            process.exit(); // breakpoint
             return undefined;
-        }
-
-        return this.nextcommand;
-    }
-
-    /**
-     * Run command
-     * @param  activeCmd    the active command that is being run
-     * @param  validOptions options/flags in object form.
-     * @return              next command (cmd) or undefined
-     */
-    runCommand(activeCmd : Command, validOptions : types.FreeObjectLiteral = {}) : types.cmd {
-        try {
-            // fuck this error -- problem is explained in commend above Run.controllers
-            let nextcommand = this.controllers[activeCmd._controller][activeCmd._method](validOptions);
-            this.printLineSeparator();
-            return nextcommand;
-        } catch(e) {
-            console.log("The command you entered was valid but it either doesn't have a controller method or the controller method's signature is invalid");
-            process.exit();
         }
     }
 
@@ -127,30 +118,26 @@ export class hornet extends Run {
      * user-defined controllers. (key = name of controller, value = user defined controller class)
      * @param  ...controllers controller classes (must be subclass of controller)
      * @return                void
-     *
-     * @problem
-     * Signature should be the following, but Liskov's Substitution Principle aint workin for
-     * some reason, so I'll use "any".
-     * register(...controllers : controller[]): void {
      */
-    register(...controllers : any[]): void {
+    register(...controllers : any[]) : void {
         for(let controller of controllers) {
-            if(controller.name === 'DEFAULT')
+            if(controller.name === 'DEFAULT') {
                 throw new Error('"DEFAULT" is a reserved controller name, use a different name.');
+            }
 
-            this.controllers[controller.name] = new controller(this);
+            this.controllers[controller.name] = <controller> new controller(this);
         }
 
-        this.controllers['DEFAULT'] = new DefaultController(this);
+        this.controllers['DEFAULT'] = <controller> new DefaultController(this);
     }
 
     /**
-     * In app.ts user passes an array of their personal commands.
+     * In app.ts user passes an array of their app's commands.
      * This is a setter + it adds a 'path' to all the nested commands.
-     * @param  commands [description]
-     * @return          [description]
+     * @param  commands Command[]
+     * @return          void
      */
-    setCommands(commands : Command[]) {
+    setCommands(commands : Command[]) : void {
         this.commands = commands;
         this.addPath(commands);
 
@@ -159,12 +146,13 @@ export class hornet extends Run {
 
     /**
      * Recursive function to add array with path to this particular object (i.e. the sequence of keys to access the object)
+     *
      * @relatesto setCommands
      * @todo Maybe make it more general form so I can reuse it on different nested arrays of objects. For now, though,
      * I only need it on commands
      */
     addPath(commands : Command[], path : string[] = []) : any {
-        for(let i = 0, len = commands.length; i < len; i++) {
+        for(let i = 0; i < commands.length; i++) {
             let command = commands[i];
             command._path = path;
             if(command.hasOwnProperty('_sub') && command._sub !== []) {

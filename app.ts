@@ -46,7 +46,7 @@ CLI.setCommands([
 
                 new command()
                 .name('list-intents', 'List intents under this domain')
-                .action('intents.list')
+                .action('intents.listIntents')
                 .option('-l, --limit=[number]', 'Limit amount of results to show.', false)
                 .sub(
                     new command()

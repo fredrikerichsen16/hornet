@@ -1,6 +1,6 @@
 import {controller} from '../controller/controller';
 import {hornet} from '../main/hornet';
-import {FreeObjectLiteral} from '../main/types';
+import {FreeObjectLiteral, cmd} from '../main/types';
 
 let rootRequire = require('root-require');
 let CompanyType = rootRequire('node/mongoose/models/companyTypes');
@@ -18,34 +18,6 @@ export class domains extends controller {
      * Name of controller (could take name of class, but if code is minified that doesn't work)
      */
     name: string = 'domains';
-
-    // ...
-
-    domains: string[] = ['greetings', 'booking', 'contact'];
-
-    async list() {
-        new Promise((resolve, reject) => {
-            Domain.find({}).then(function(domains : any) {
-                console.log('Hei');
-                process.exit();
-                resolve(domains);
-            });
-        })
-        .then((res : any) => {
-            for(let item of res) {
-                console.log(item.name);
-            }
-
-            this.traverseForward();
-
-            process.exit();
-            return;
-        })
-        .catch((err) => {
-            console.log(err);
-            process.exit();
-        });
-    }
 
     create() {
         let domain = this.readline('Insert domain name to add: ').trim();
@@ -75,12 +47,34 @@ export class domains extends controller {
                 let newName = this.readline("Try to input a different domain name or type 'exit' to go back.");
 
                 if(newName === 'exit') {
-                    return new this.cmd({'command': 'domain-detail'});
+                    return new this.cmd({'command': 'list-domains'});
                 } else {
                     this.detail({'name': newName});
                 }
             }
+        } else {
+            console.log('No name passed.');
+            return new this.cmd({'command': 'list-domains'});
         }
+    }
+
+    domains : string[] = [];
+
+    async list() {
+        let self = this;
+
+        return new Promise((resolve, reject) => {
+            console.log('Loading...');
+            setTimeout(async () => {
+                var domains = await Domain.find({});
+                for(let domain of domains) {
+                    self.domains.push(domain.name);
+                    console.log(domain.name);
+                }
+                self.traverseForward();
+                resolve(undefined);
+            }, 2000);
+        });
     }
 
     delete(options : FreeObjectLiteral) {

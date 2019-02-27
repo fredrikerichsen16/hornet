@@ -8,3 +8,7 @@ export type cmd = cmd | undefined;
 
 // any primitive
 export type primitive = string | number | boolean;
+
+export interface Contructable<T> {
+    new() : T;
+}

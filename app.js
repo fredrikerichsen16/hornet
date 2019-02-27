@@ -34,7 +34,7 @@ CLI.setCommands([
         .name('delete', 'Delete this domain')
         .action('domains.delete'), new Command_1.Command()
         .name('list-intents', 'List intents under this domain')
-        .action('intents.list')
+        .action('intents.listIntents')
         .option('-l, --limit=[number]', 'Limit amount of results to show.', false)
         .sub(new Command_1.Command()
         .name('intent-detail', 'Show details of one intent')

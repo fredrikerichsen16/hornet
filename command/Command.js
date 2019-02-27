@@ -73,13 +73,19 @@ class Command {
      */
     getValidFlags() {
     }
+    /**
+     * Find command with specified name among list of commands
+     * @param  command        string - command name
+     * @param  activeCommands Command[] - active commands
+     * @return                Command
+     */
     static find(command, activeCommands) {
         for (let activeCmd of activeCommands) {
             if (command === activeCmd._name) {
                 return activeCmd;
             }
         }
-        return null;
+        return undefined;
     }
 }
 exports.Command = Command;

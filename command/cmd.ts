@@ -2,8 +2,13 @@ let includes = require('lodash/includes');
 
 import {Command} from './Command';
 import * as types from '../main/types';
-import {flat} from '../main/helperFunctions';
+import {flatten} from '../main/helperFunctions';
 
+/**
+ * CMDs are contructed using an object inside controllers. For example in a user-defined
+ * controller they can go to the next command by writing:
+ * return this.cmd({name: 'houses.detail', options: {'id': 2}});
+ */
 interface ConstructorObject {
     name?: string,
     action?: string,
@@ -16,8 +21,6 @@ export class cmd {
     name?: string; // name of command, i.e. what user types to access the command
     action?: string; // path to method which handles the command - Format: 'controller.method'
     command?: string;
-    controller?: string;
-    method?: string;
     options?: types.FreeObjectLiteral = {};
 
     /**
@@ -47,11 +50,18 @@ export class cmd {
         }
     }
 
+    /**
+     * Find the actual command object (Command class) corresponding to a cmd object.
+     * @param  commands Command[] - List of commands to search
+     * @param  obj      Object containing search parameters. Either the name of
+     *                  the command or the action ("controllerName.methodName")
+     * @return          Command
+     */
     find(commands : Command[], obj : {name?: string, action?: string}) : Command | undefined {
         let self = this;
         let searchBy = obj.name ? 'name' : 'action';
 
-        var flattenedCommands = flat(commands, '_sub');
+        var flattenedCommands = flatten(commands, '_sub');
 
         for(let activeCmd of flattenedCommands) {
             if(searchBy === 'name' && activeCmd._name === obj.name) {
@@ -61,5 +71,7 @@ export class cmd {
                 return activeCmd;
             }
         }
+
+        return undefined;
     }
 }
