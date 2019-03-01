@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Option_1 = require("./Option");
 class FilledOption extends Option_1.Option {
-    constructor(short = null, long = null, value = null, type) {
+    constructor(short = undefined, long = undefined, value = null, type) {
         super(short, long);
         this.value = value;
         this.type = type;

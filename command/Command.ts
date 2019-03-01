@@ -65,6 +65,20 @@ export class Command {
         return this;
     }
 
+    _passThrough : boolean = false;
+
+    /**
+     * Pass through commands aren't registered in the breadcrumb and don't update the path.
+     * Only use-case so far is for the default "back" command.
+     * @return [description]
+     */
+    passThrough()
+    {
+        this._passThrough = true;
+
+        return this;
+    }
+
     /**
      * Insert Subcommands
      * @param  ...subcommands
@@ -94,13 +108,19 @@ export class Command {
      * Find command with specified name among list of commands
      * @param  command        string - command name
      * @param  activeCommands Command[] - active commands
+     * @param  force          boolean - Throw error if command isn't found.
      * @return                Command
      */
-    static find(command : string, activeCommands : Command[]) : Command | undefined {
+    static find(command : string, activeCommands : Command[], force : boolean = true) : Command | undefined {
         for(let activeCmd of activeCommands) {
             if(command === activeCmd._name) {
                 return activeCmd;
             }
+        }
+
+        if(force) {
+            console.log("Couldn't find command. Error #2043");
+            process.exit();
         }
 
         return undefined;

@@ -10,10 +10,18 @@ export class authentication extends controller {
     name: string = 'authentication';
 
     signin(options : any) {
-        if(options.admin) {
+
+        if(this.session.get('domains')) {
+            console.log('We got da message by the way.. ' + this.session.get('domains')[0]);
+        }
+
+        if(options.admin)
+        {
             console.log('You signed in as admin');
             return this.traverseForward();
-        } else {
+        }
+        else 
+        {
             let username = this.readline('Username: ', 'green');
             let password = this.readline('Password: ', 'cyan');
 

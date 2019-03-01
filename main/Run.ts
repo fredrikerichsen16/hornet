@@ -3,6 +3,8 @@
  */
 import {Command} from '../command/Command';
 import {controller} from '../controller/controller';
+import {cmd} from '../command/cmd';
+import {Session} from './Session';
 
 const chalk = require('chalk');
 const find = require('lodash/find');
@@ -28,10 +30,13 @@ export class Run {
     defaultCommands: Command[] = [];
 
     // Breadcrumb
-    breadcrumb: Command[] = [];
+    breadcrumb: cmd[] = [];
 
     // Path
     path: string[] = [];
+
+    // Session
+    session : Session = new Session();
 
     /**
      * Object literal containing user-defined controllers.
@@ -43,19 +48,20 @@ export class Run {
      */
     controllers: {[key: string] : any} = {};
 
-    setActiveCommand(command : Command, addToPath : boolean = false) {
-        this.activeCommand = command;
+    setActiveCommand(command : cmd) {
+        let activeCommand;
+        this.activeCommand = activeCommand = <Command> command.command;
 
-        if(command._name === 'back' && command._controller === 'DEFAULT') return; // @temporary
+        if(activeCommand._passThrough) return;
 
         this.breadcrumb.push(command);
-        this.path = command._path.slice(); // .slice() because it makes a copy.
-                                           // May alter this.path, but NEVER alter command._path
+        this.path = activeCommand._path.slice(); // .slice() because it makes a copy.
+                                                 // May alter this.path, but NEVER alter command._path
 
         // @cleanup this is probably never necessary
-        if(addToPath) {
-            this.path.push(command._name);
-        }
+        // if(addToPath) {
+        //     this.path.push(command._name);
+        // }
     }
 
     /**
@@ -72,25 +78,35 @@ export class Run {
      * @return             Command[]
      */
     getActiveCommands(withDefault : boolean = true) : Command[] {
-        let commands = this.commands;
-        let path = this.path;
-
-        let activeCommands = cloneDeep(commands);
-
-        for(let i = 0; i < path.length; i++) {
-            try {
-                activeCommands = find(activeCommands, {'_name': path[i]})._sub;
-            } catch(e) {
-                console.log('Problem #434');
-                process.exit();
-            }
-        }
+        let activeCommands = this.findCommandsByPath(this.path);
 
         if(withDefault) {
             activeCommands = activeCommands.concat(this.defaultCommands);
         }
 
         return activeCommands;
+    }
+
+    findCommandsByPath(path : string[], findOne : boolean = false) {
+        if(findOne && path.length === 0) return null;
+
+        let commands : Command[] = cloneDeep(this.commands);
+
+        let command;
+        for(let i = 0; i < path.length; i++) {
+            try {
+                command = find(commands, {'_name': path[i]});
+                if(findOne && path.length - 1 === i) {
+                    return command;
+                }
+                commands = command._sub;
+            } catch(e) {
+                console.log('Problem #434');
+                process.exit();
+            }
+        }
+
+        return commands;
     }
 
     /**

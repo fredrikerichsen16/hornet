@@ -7,7 +7,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var includes = require('lodash/includes');
 class Option {
-    constructor(short = null, long = null) {
+    constructor(short, long) {
         if (short)
             this.short = short;
         if (long)

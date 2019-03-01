@@ -29,7 +29,7 @@ export class domains extends controller {
 
         this.domains.push(domain);
 
-        return new this.cmd({'name': 'domain-detail', 'options': {
+        return new this.cmd(this.hornet, {'name': 'domain-detail', 'options': {
             'name': domain
         }});
     }
@@ -38,7 +38,7 @@ export class domains extends controller {
         let name = options.name || null;
 
         if(name) {
-            if(includes(this.domains, name)) {
+            if(includes(this.session.get('domains'), name)) {
                 console.log(`Found domain ${name}, showing details:`);
                 this.traverseForward();
                 return;
@@ -47,42 +47,56 @@ export class domains extends controller {
                 let newName = this.readline("Try to input a different domain name or type 'exit' to go back.");
 
                 if(newName === 'exit') {
-                    return new this.cmd({'command': 'list-domains'});
+                    return new this.cmd(this.hornet, {'name': 'list-domains'});
                 } else {
                     this.detail({'name': newName});
                 }
             }
         } else {
             console.log('No name passed.');
-            return new this.cmd({'command': 'list-domains'});
+            return new this.cmd(this.hornet, {'name': 'list-domains'});
         }
     }
-
-    domains : string[] = [];
 
     async list() {
         let self = this;
 
-        return new Promise((resolve, reject) => {
-            console.log('Loading...');
-            setTimeout(async () => {
-                var domains = await Domain.find({});
-                for(let domain of domains) {
-                    self.domains.push(domain.name);
-                    console.log(domain.name);
-                }
-                self.traverseForward();
-                resolve(undefined);
-            }, 2000);
-        });
+        function printDomains(items : any) {
+            for(let item of items) {
+                console.log(item);
+            }
+        }
+
+        if(this.session.get('domains'))
+        {
+            printDomains(this.session.get('domains'));
+        }
+        else
+        {
+            return new Promise((resolve, reject) => {
+                console.log('Loading...');
+                setTimeout(async () => {
+                    var domains = await Domain.find({});
+
+                    self.session.set('domains', []);
+
+                    for(let domain of domains) {
+                        self.session.get('domains').push(domain.name);
+                        console.log(domain.name);
+                    }
+                    self.traverseForward();
+                    resolve(undefined);
+                }, 1000);
+            });
+        }
     }
 
     delete(options : FreeObjectLiteral) {
-        return new this.cmd({'name': 'signin'});
+        return new this.cmd(this.hornet, {'name': 'signin'});
     }
 
     update(options : FreeObjectLiteral) {
-        return new this.cmd({'name': 'list-domains'});
+        return new this.cmd(this.hornet, {'name': 'list-domains'});
     }
 
 }

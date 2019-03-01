@@ -12,7 +12,7 @@ export class Option {
     short?: string; // shorthand name of option
     long?: string; // long name of option
 
-    constructor(short: string | null = null, long: string | null = null) {
+    constructor(short ?: string, long ?: string) {
         if(short) this.short = short;
         if(long) this.long = long;
     }

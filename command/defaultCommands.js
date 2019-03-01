@@ -10,10 +10,11 @@ function a(str) {
 }
 let defaultCommands = [
     new Command_1.Command()
+        .passThrough()
         .name('back')
         .action(a('back'))
-        .option('-u, --up=[boolean]', 'Go back "up" in the nested tree structure. (Default behavior without flag)')
-        .option('-p, --previous=[boolean]', 'Go back to previous command.')
+        .option('-p, --previous=[boolean]', 'Go back to previous command. (Default behavior without flag)')
+        .option('-u, --up=[boolean]', 'Go back "up" in the nested tree structure.')
         .option('-s, --start=[boolean]', 'Go back to start.')
 ];
 exports.defaultCommands = defaultCommands;

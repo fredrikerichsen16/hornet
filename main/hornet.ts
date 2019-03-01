@@ -15,49 +15,26 @@ import {defaultCommands} from '../command/defaultCommands';
 
 export class hornet extends Run {
 
-    nextcommand ?: cmd = undefined;
+    nextCommand ?: cmd = undefined;
 
     async run() {
         let self = this;
 
         while(true)
         {
-            if(self.nextcommand)
+            if(self.nextCommand)
             {
-                /**
-                 * ! is placed after nextcommand because:
-                 * https://stackoverflow.com/questions/44147937/property-does-not-exist-on-type-never
-                 * Basically compiled assumes this code is unreachable because nextcommand is initially set
-                 * to null, so it changes its type to 'never'. ! is probably not an ideal solution.
-                 */
-                if(self.nextcommand.command)
+                if(self.nextCommand.isInput())
                 {
-                    self.handleUserInput(self.nextcommand.command);
+                    await self.handleUserInput(self.nextCommand);
                 }
-                else if(self.nextcommand.name || self.nextcommand.action)
+                else if(self.nextCommand.isCommand())
                 {
-                    let obj : {name?: string, action?: string} = {};
-                    if(self.nextcommand.name) {
-                        obj.name = self.nextcommand.name;
-                    } else if(self.nextcommand.action) {
-                        obj.action = self.nextcommand.action;
-                    } else {
-                        console.log('Nextcommand error. Error #3124');
-                        process.exit();
-                    }
-
-                    let activeCmd = self.nextcommand.find(this.getAllCommands(), obj);
-
-                    if(!activeCmd) {
-                        console.log('Command not found.');
-                        process.exit();
-                    }
-
-                    await this.runCommand(activeCmd, self.nextcommand.options, undefined, undefined);
+                    await this.runCommand(self.nextCommand);
                 }
                 else
                 {
-                    self.nextcommand = undefined;
+                    self.nextCommand = undefined;
                 }
             }
             else
@@ -74,43 +51,51 @@ export class hornet extends Run {
         return inp;
     }
 
-    async handleUserInput(userInput ?: string) {
+    async handleUserInput(command ?: cmd) {
         let self = this;
+
+        if(command && !command.input) {
+            console.log('Error #3710');
+            process.exit();
+        }
 
         let activeCommands = this.getActiveCommands();
 
-        if(!userInput) {
+        let userInput;
+        if(!command) {
             this.printAvailableCommands(activeCommands);
             userInput = this.getUserInput();
+            command = new cmd(this, {'command': userInput});
         }
 
-        let [command, options] = FilledOption.decompose(userInput);
+        let [commandName, options] = FilledOption.decompose(<string> command.input);
+        let activeCmd = <Command> Command.find(commandName, activeCommands, true);
+        let validOptions = Option.validOptions(options, activeCmd._options);
 
-        // ...
+        command.command = activeCmd;
+        command.options = validOptions;
 
-        let activeCmd = Command.find(command, activeCommands);
-
-        await this.runCommand(activeCmd, undefined, options, userInput);
+        await this.runCommand(command);
     }
 
-    async runCommand(activeCmd ?: Command, validOptions : types.FreeObjectLiteral = {}, options ?: FilledOption[], userInput ?: string) {
+    async runCommand(command : cmd)
+    {
         let self = this;
 
-        this.clearScreen(userInput);
+        this.clearScreen(command.input);
 
-        if(activeCmd) {
-            this.setActiveCommand(activeCmd);
-            if(options) {
-                validOptions = Option.validOptions(options, activeCmd._options);
-            }
+        this.setActiveCommand(command);
 
-            this.nextcommand = await this.controllers[activeCmd._controller][activeCmd._method](validOptions);
-            this.printLineSeparator();
-        } else {
-            console.log('Command not found');
-            process.exit(); // breakpoint
-            return undefined;
-        }
+        let activeCommand = <Command> command.command;
+
+        this.nextCommand = await this.controllers[activeCommand._controller][activeCommand._method](command.options);
+        this.printLineSeparator();
+    }
+
+    commandNotFound()
+    {
+        console.log('Command not found');
+        process.exit(); // breakpoint
     }
 
     /**
@@ -134,6 +119,15 @@ export class hornet extends Run {
     /**
      * In app.ts user passes an array of their app's commands.
      * This is a setter + it adds a 'path' to all the nested commands.
+     *
+     * @example in app.ts user writes something like
+     * CLI.setCommands([
+     *   command
+     *      subcommand
+     *      subcommand
+     *          subcommand
+     *   command
+     * ])
      * @param  commands Command[]
      * @return          void
      */

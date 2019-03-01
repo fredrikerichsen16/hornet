@@ -7,6 +7,9 @@ class authentication extends controller_1.controller {
         this.name = 'authentication';
     }
     signin(options) {
+        if (this.session.get('domains')) {
+            console.log('We got da message by the way.. ' + this.session.get('domains')[0]);
+        }
         if (options.admin) {
             console.log('You signed in as admin');
             return this.traverseForward();

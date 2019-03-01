@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Session_1 = require("./Session");
 const chalk = require('chalk');
 const find = require('lodash/find');
 const cloneDeep = require('lodash/cloneDeep');
@@ -18,6 +19,8 @@ class Run {
         this.breadcrumb = [];
         // Path
         this.path = [];
+        // Session
+        this.session = new Session_1.Session();
         /**
          * Object literal containing user-defined controllers.
          * key: name of controller
@@ -28,17 +31,18 @@ class Run {
          */
         this.controllers = {};
     }
-    setActiveCommand(command, addToPath = false) {
-        this.activeCommand = command;
-        if (command._name === 'back' && command._controller === 'DEFAULT')
-            return; // @temporary
+    setActiveCommand(command) {
+        let activeCommand;
+        this.activeCommand = activeCommand = command.command;
+        if (activeCommand._passThrough)
+            return;
         this.breadcrumb.push(command);
-        this.path = command._path.slice(); // .slice() because it makes a copy.
+        this.path = activeCommand._path.slice(); // .slice() because it makes a copy.
         // May alter this.path, but NEVER alter command._path
         // @cleanup this is probably never necessary
-        if (addToPath) {
-            this.path.push(command._name);
-        }
+        // if(addToPath) {
+        //     this.path.push(command._name);
+        // }
     }
     /**
      * Concat this.commands and this.defaultCommands
@@ -53,22 +57,31 @@ class Run {
      * @return             Command[]
      */
     getActiveCommands(withDefault = true) {
-        let commands = this.commands;
-        let path = this.path;
-        let activeCommands = cloneDeep(commands);
+        let activeCommands = this.findCommandsByPath(this.path);
+        if (withDefault) {
+            activeCommands = activeCommands.concat(this.defaultCommands);
+        }
+        return activeCommands;
+    }
+    findCommandsByPath(path, findOne = false) {
+        if (findOne && path.length === 0)
+            return null;
+        let commands = cloneDeep(this.commands);
+        let command;
         for (let i = 0; i < path.length; i++) {
             try {
-                activeCommands = find(activeCommands, { '_name': path[i] })._sub;
+                command = find(commands, { '_name': path[i] });
+                if (findOne && path.length - 1 === i) {
+                    return command;
+                }
+                commands = command._sub;
             }
             catch (e) {
                 console.log('Problem #434');
                 process.exit();
             }
         }
-        if (withDefault) {
-            activeCommands = activeCommands.concat(this.defaultCommands);
-        }
-        return activeCommands;
+        return commands;
     }
     /**
      * Print available commands

@@ -35,6 +35,7 @@ class DeclaredOption extends Option_1.Option {
         if (short)
             returnObj.short = short[0];
         /**
+         * @cleanup - remove this or write it better
          * (?<=\s) -> positive lookbehind - checks pattern that is preceded by \s (whitespace), but
          *            doesn't include that whitespace in the returned pattern
          * --      -> long flags start with two dashes, like --save

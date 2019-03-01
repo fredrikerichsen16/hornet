@@ -3,16 +3,16 @@
  */
 
 import {Option} from './Option';
-import * as types from './types';
+import * as types from '../main/types';
 
 export class FilledOption extends Option {
     value: any;
     type: string;
 
-    constructor(short: string | null = null,
-                long: string | null = null,
-                value: any = null,
-                type: string) {
+    constructor(short : string | undefined = undefined,
+                long : string | undefined = undefined,
+                value : any = null,
+                type : string) {
         super(short, long);
         this.value = value;
         this.type = type;

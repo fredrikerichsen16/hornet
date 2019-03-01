@@ -23,7 +23,7 @@ CLI.setCommands([
         new command()
         .name('list-domains', 'List domains')
         .action('domains.list')
-        .option('-l, --limit=[number:boolean]', 'Limit amount of results to show.', false)
+        .option('-l, --limit=[number:boolean]', 'Limit amount of results to show.')
         .sub(
             new command()
             .name('create', 'Create domain')
@@ -32,6 +32,7 @@ CLI.setCommands([
             new command()
             .name('domain-detail', 'Show details of one domain')
             .action('domains.detail')
+            // .arguments('<name:string> <limit:int> [fields:string]')
             .option('-i, --index=[number]', 'Domain index to show details of')
             .option('-n, --name=[string]', 'Name of domain to show details of')
             .sub(

@@ -23,6 +23,10 @@ export abstract class controller {
      */
     hornet: hornet;
 
+    get session() {
+        return this.hornet.session;
+    }
+
     /**
      * Some useful getters that might be used in controllers
      */
@@ -57,6 +61,8 @@ export abstract class controller {
      * Pop this.breadcrumb so that the current command isn't counted as a "real" command that the user can
      * go "back" to. The default command "back" is a good example. You should not be able to go back to "back".
      * @return [description]
+     *
+     * @cleanup - This is probably redundant with my new solution. But maybe not.
      */
     removeBreadcrumb() {
         this.hornet.breadcrumb.pop();
