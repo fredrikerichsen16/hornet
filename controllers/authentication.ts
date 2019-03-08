@@ -9,8 +9,11 @@ export class authentication extends controller {
 
     name: string = 'authentication';
 
-    signin(options : any) {
+    start(options : any) {
+        console.log('Welcome to this CLI');
+    }
 
+    signin(options : any) {
         if(this.session.get('domains')) {
             console.log('We got da message by the way.. ' + this.session.get('domains')[0]);
         }
@@ -20,7 +23,7 @@ export class authentication extends controller {
             console.log('You signed in as admin');
             return this.traverseForward();
         }
-        else 
+        else
         {
             let username = this.readline('Username: ', 'green');
             let password = this.readline('Password: ', 'cyan');

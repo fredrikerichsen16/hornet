@@ -7,17 +7,41 @@
  *        controllerName.methodName with only characters that are legal class and method names.
  */
 
-import {DeclaredOption} from '../option/DeclaredOption';
+import {Flag} from '../option/Flag';
+import {Argument} from '../option/Argument';
+var findLast = require('lodash.findLast');
 
 export class Command {
     _name!: string; // name of command, i.e. what user types to access the command
     _description?: string; // description of command, shown in the CLI to help user navigate it
     _action!: string; // path to method which handles the command - Format: 'controller.method'
+
     _controller!: string;
     _method!: string;
-    _options: DeclaredOption[] = []; // option such as '-l, --limit' but in a structured format
+
+    _flags: Flag[] = []; // option such as '-l, --limit' but in a structured format
+    _arguments: Argument[] = []; // option such as '-l, --limit' but in a structured format
+
     _sub: Command[] = []; // sub commands
     _path: string[] = [];
+
+    /**
+     * Pass through commands aren't registered in the breadcrumb and don't update the path.
+     * Only use-case so far is for the default "back" command.
+     * @setter passThrough
+     */
+    _passThrough : boolean = false;
+
+    /**
+     * Don't show it when displaying available commands
+     * @setter hidden
+     */
+    _hidden : boolean = false;
+
+    /**
+     * Default start command. This command runs as soon as program runs.
+     */
+    _default : boolean = false;
 
     /**
      * Setter for _name property - name of command
@@ -58,23 +82,42 @@ export class Command {
      * @param  description
      * @param  required
      * @return
+     *
+     * @todo Rename to flag
      */
-    option(flags: string, description: string, required: boolean = false) {
-        this._options.push(new DeclaredOption(flags, description, required));
+    flag(flag: string, description: string, required: boolean = false) {
+        this._flags.push(new Flag(flag, description, required));
 
         return this;
     }
 
-    _passThrough : boolean = false;
-
     /**
-     * Pass through commands aren't registered in the breadcrumb and don't update the path.
-     * Only use-case so far is for the default "back" command.
-     * @return [description]
+     * Add argument such as <name:type> or [name:type]
+     * @param  text        [description]
+     * @param  description [description]
+     * @param  required    [description]
+     * @return             [description]
      */
-    passThrough()
-    {
+    argument(text: string, description: string, required: boolean = false) {
+        this._arguments.push(new Argument(text, description, required));
+
+        return this;
+    }
+
+    passThrough() {
         this._passThrough = true;
+
+        return this;
+    }
+
+    hidden() {
+        this._hidden = true;
+
+        return this;
+    }
+
+    default() {
+        this._default = true;
 
         return this;
     }
@@ -85,6 +128,8 @@ export class Command {
      * @return
      */
     sub(...subcommands : Command[]) {
+        if(this._default) return this;
+
         var self = this;
 
         for(let i = 0; i < subcommands.length; i++)
@@ -97,11 +142,36 @@ export class Command {
     }
 
     /**
-     * [getValidFlags description]
-     * @return [description]
+     * Take command _arguments and if it contains more than one array argument remove all
+     * but the last one and move the array argument to the last element in _arguments.
+     * @param  commands [description]
+     * @return          [description]
      */
-    getValidFlags() {
+    static arrangeArguments(commands : Command[])
+    {
+        for(let command of commands)
+        {
+            let last = findLast(command._arguments, {'array': true});
 
+            command._arguments = command._arguments.filter((arg) => {
+                return arg.array === false;
+            });
+
+            if(last) {
+                command._arguments.push(last);
+            }
+
+            let foundOptional = false;
+            for(let arg of command._arguments) {
+                if(!arg.required) {
+                    foundOptional = true;
+                } else {
+                    if(foundOptional) {
+                        throw new Error("Can't have required arguments after optional arguments.");
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -111,9 +181,11 @@ export class Command {
      * @param  force          boolean - Throw error if command isn't found.
      * @return                Command
      */
-    static find(command : string, activeCommands : Command[], force : boolean = true) : Command | undefined {
-        for(let activeCmd of activeCommands) {
-            if(command === activeCmd._name) {
+    static find(command : string, activeCommands : Command[], force : boolean = false) : Command | undefined {
+        for(let activeCmd of activeCommands)
+        {
+            if(command === activeCmd._name)
+            {
                 return activeCmd;
             }
         }

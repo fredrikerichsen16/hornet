@@ -11,6 +11,14 @@ import {cmd} from '../command/cmd';
 const chalk = require('chalk');
 const readlineSync = require('readline-sync');
 
+interface CmdConstructorObject {
+    name?: string,
+    action?: string,
+    command?: string,
+    default?: string,
+    options?: {[key: string] : any}
+}
+
 export abstract class controller {
 
     /**
@@ -28,6 +36,31 @@ export abstract class controller {
     }
 
     /**
+     * Log
+     */
+    log(output : string, color ?: string, inline : boolean = false, print : boolean = true) {
+        if(color) {
+            output = this.chalk[color](output);
+        }
+
+        if(inline)
+        {
+            if(print) process.stdout.write(output);
+        }
+        else
+        {
+            if(print) console.log(output);
+            output += '\n';
+        }
+
+        this.hornet.breadcrumb[this.hornet.breadcrumb.length - 1].output += output;
+    }
+
+    makePassThrough() {
+        this.hornet.breadcrumb.pop();
+    }
+
+    /**
      * Some useful getters that might be used in controllers
      */
      getPath() : string[] {
@@ -37,7 +70,11 @@ export abstract class controller {
     /**
      * cmd class
      */
-    cmd : typeof cmd = cmd;
+    _cmd : typeof cmd = cmd;
+
+    cmd(obj : CmdConstructorObject) {
+        return new this._cmd(this.hornet, obj);
+    }
 
     /**
      * chalk object for colored text
@@ -76,12 +113,19 @@ export abstract class controller {
      * @return          string         - user input
      */
     readline(question : string, color ?: string, trim : boolean = true) : string {
-        if(color) {
-            question = this.chalk[color](question);
-        }
+        if(color) question = this.chalk[color](question);
         let inp : string = readlineSync.question(question);
+
+        this.log(question, undefined, true, false);
+        this.log(inp, undefined, false, false);
+
         if(trim) inp = inp.trim();
+
         return inp;
+    }
+
+    color(text : string, color : string) {
+        return this.chalk[color](text);
     }
 
     /**
@@ -92,8 +136,8 @@ export abstract class controller {
      */
     readlineYN(question : string, trim : boolean = true) : boolean {
         let inp : string = readlineSync.question(question);
-        if(trim) inp = inp.trim();
-        return inp === 'Y';
+        if(trim) inp = inp.trim().toLowerCase();
+        return inp === 'y';
     }
 
     /**

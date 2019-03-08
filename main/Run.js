@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Session_1 = require("./Session");
 const chalk = require('chalk');
-const find = require('lodash/find');
-const cloneDeep = require('lodash/cloneDeep');
+const find = require('lodash.find');
+const cloneDeep = require('lodash.cloneDeep');
 class Run {
     constructor() {
         // chalk
@@ -98,23 +98,46 @@ class Run {
             if (command._name === 'back' && self.path.length === 0 && self.breadcrumb.length === 0) {
                 return;
             }
-            console.log(command._name);
-            if (command._options.length > 0) {
-                command._options.forEach(function (option) {
+            if (command._hidden) {
+                return;
+            }
+            process.stdout.write(command._name);
+            if (command._description)
+                console.log(' - ' + command._description);
+            else
+                console.log();
+            if (command._arguments.length > 0) {
+                command._arguments.forEach(function (arg) {
                     process.stdout.write(self.optionsIncrement);
-                    if (option.short) {
-                        process.stdout.write('-' + option.short);
+                    if (arg.array) {
+                        process.stdout.write(`[${arg.name}:${arg.type}]`);
                     }
-                    if (option.long) {
-                        if (option.short) {
+                    else {
+                        process.stdout.write(`<${arg.name}:${arg.type}>`);
+                    }
+                    if (arg.required) {
+                        process.stdout.write(' - required');
+                    }
+                    if (arg.description) {
+                        process.stdout.write(` - ${arg.description}`);
+                    }
+                    console.log('');
+                });
+            }
+            if (command._flags.length > 0) {
+                command._flags.forEach(function (flag) {
+                    process.stdout.write(self.optionsIncrement);
+                    if (flag.short) {
+                        process.stdout.write(`-${flag.short}`);
+                    }
+                    if (flag.long) {
+                        if (flag.short) {
                             process.stdout.write(', ');
                         }
-                        process.stdout.write('--' + option.long);
-                        if (option.types.length > 0) {
-                            process.stdout.write('=[' + option.types.join(':') + ']');
-                        }
+                        process.stdout.write(`--${flag.long}`);
+                        process.stdout.write(`=[${flag.type}]`);
                     }
-                    process.stdout.write(' - ' + option.description);
+                    process.stdout.write(` - ${flag.description}`);
                     console.log('');
                 });
             }

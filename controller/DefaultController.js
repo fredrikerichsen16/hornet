@@ -19,12 +19,18 @@ class DefaultController extends controller_1.controller {
          */
         this.name = 'DEFAULT';
     }
+    default() {
+        let welcomeMessage = this.hornet.welcomeMessage || "Welcome to this CLI brah";
+        console.log(welcomeMessage);
+    }
+    error(options) {
+        console.log(options.error);
+    }
     /**
      * Go back to the previous command that was run
      * @return [description]
      */
     back(options) {
-        let self = this;
         /**
          * @todo
          * Right now it's hard to go back "up" because code doesn't know what options to pass.
@@ -40,61 +46,28 @@ class DefaultController extends controller_1.controller {
          *  - only run commands with no required options or ones with default values (show message for others)
          *  - complicated solution to make it work perfectly
          */
-        function up() {
-            self.hornet.path.pop();
-            return undefined;
-            return start();
-            // self.hornet.path.pop();
-            //
-            // let command = self.hornet.findCommandsByPath(self.hornet.path, true);
-            //
-            // if(command) {
-            //     let toCommand = new cmd(self.hornet, {'command': });
-            //
-            //     return command;
-            // } else {
-            //     self.hornet.path = [];
-            //     return undefined;
-            // }
-        }
+        let self = this;
         function start() {
-            self.hornet.path = [];
-            return undefined;
+            self.hornet.breadcrumb.length = 1;
+            let toCommand = self.hornet.breadcrumb[self.hornet.breadcrumb.length - 1];
+            self.hornet.path = toCommand.command._path;
+            return toCommand;
         }
-        function previous() {
-            try {
-                let toCommand;
-                if (self.hornet.breadcrumb.length > 1) {
-                    toCommand = self.hornet.breadcrumb[self.hornet.breadcrumb.length - 2];
-                }
-                else {
-                    toCommand = self.hornet.breadcrumb[self.hornet.breadcrumb.length - 1];
-                }
-                toCommand.printInput = true;
-                if (toCommand.command) {
-                    return toCommand;
-                }
-                else {
-                    console.log('"Back" does not work because of an error. Error #4721');
-                    process.exit();
-                }
-            }
-            catch (e) {
-                console.log(e);
-                process.exit();
-                self.hornet.path = [];
-                return undefined;
-            }
-        }
-        if (options.hasOwnProperty('up') && options.up) {
-            return up();
-        }
-        else if (options.hasOwnProperty('start') && options.start) {
+        if (options.hasOwnProperty('start') && options.start) {
             return start();
         }
         else // 'previous' (default behavior)
          {
-            return previous();
+            let steps = options.steps || 1;
+            let breadcrumb = self.hornet.breadcrumb;
+            if (breadcrumb.length <= steps) {
+                return start();
+            }
+            breadcrumb.length -= steps;
+            let toCommand = breadcrumb[breadcrumb.length - 1];
+            self.hornet.path = toCommand.command._path;
+            self.hornet.breadcrumb.pop();
+            return toCommand;
         }
     }
 }

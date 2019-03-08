@@ -3,64 +3,43 @@ import {Command as command} from "./command/Command";
 
 // controllers
 import {domains} from './controllers/domains';
-import {intents} from './controllers/intents';
 import {authentication} from './controllers/authentication';
 
 var CLI = new hornet();
 
-require('./node/mongoose/app')();
+CLI.welcomeMessage = "Welcome to this CLI my dear friends!";
 
 CLI.setCommands([
+    new command()
+    .name('start', 'Hei du!')
+    .action('authentication.start')
+    .default(),
+
     new command()
     .name('signup')
     .action('authentication.signup'),
 
     new command()
     .name('signin', 'Sign in page')
-    .option('-a, --admin=[boolean]', 'Automatically sign in as admin.')
+    .flag('-a, --admin=[boolean]', 'Automatically sign in as admin.')
     .action('authentication.signin')
     .sub(
         new command()
-        .name('list-domains', 'List domains')
-        .action('domains.list')
-        .option('-l, --limit=[number:boolean]', 'Limit amount of results to show.')
+        .name('a1', 'A1')
+        .action('domains.a1')
         .sub(
             new command()
-            .name('create', 'Create domain')
-            .action('domains.create'),
-
-            new command()
-            .name('domain-detail', 'Show details of one domain')
-            .action('domains.detail')
-            // .arguments('<name:string> <limit:int> [fields:string]')
-            .option('-i, --index=[number]', 'Domain index to show details of')
-            .option('-n, --name=[string]', 'Name of domain to show details of')
+            .name('a2', 'A2')
+            .action('domains.a2')
             .sub(
                 new command()
-                .name('update', 'Update this domain')
-                .option('-q --quick', 'Quick update')
-                .action('domains.update'),
-
-                new command()
-                .name('delete', 'Delete this domain')
-                .action('domains.delete'),
-
-                new command()
-                .name('list-intents', 'List intents under this domain')
-                .action('intents.listIntents')
-                .option('-l, --limit=[number]', 'Limit amount of results to show.', false)
-                .sub(
-                    new command()
-                    .name('intent-detail', 'Show details of one intent')
-                    .action('intents.detail')
-                    .option('-i, --index=[number]', 'Intent index to show details of')
-                    .option('-n, --name=[string]', 'Name of intent to show details of')
-                )
+                .name('a3', 'A3')
+                .action('domains.a3')
             )
         )
     )
 ]);
 
-CLI.register(authentication, domains, intents);
+CLI.register(authentication, domains);
 
 CLI.run();

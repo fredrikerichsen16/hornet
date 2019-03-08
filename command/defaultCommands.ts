@@ -13,11 +13,22 @@ function a(str : string) {
 let defaultCommands = [
     new command()
     .passThrough()
-    .name('back')
-    .action(a('back'))
-    .option('-p, --previous=[boolean]', 'Go back to previous command. (Default behavior without flag)')
-    .option('-u, --up=[boolean]', 'Go back "up" in the nested tree structure.')
-    .option('-s, --start=[boolean]', 'Go back to start.')
+    .name('back', 'Go back to the previous command')
+    .flag('-s, --start=[boolean]', 'Go back to start.')
+    .argument('<steps:number>', 'How many steps to go back', false)
+    .action(a('back')),
+
+    new command()
+    .name('default')
+    .action(a('default'))
+    .hidden()
+    .default(),
+
+    new command()
+    .name('error')
+    .action(a('error'))
+    .passThrough()
+    .hidden()
 ];
 
 export {defaultCommands};

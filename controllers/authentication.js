@@ -6,6 +6,9 @@ class authentication extends controller_1.controller {
         super(hornet);
         this.name = 'authentication';
     }
+    start(options) {
+        console.log('Welcome to this CLI');
+    }
     signin(options) {
         if (this.session.get('domains')) {
             console.log('We got da message by the way.. ' + this.session.get('domains')[0]);

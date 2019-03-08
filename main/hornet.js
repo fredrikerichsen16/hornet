@@ -8,16 +8,29 @@ const Command_1 = require("../command/Command");
 const Option_1 = require("../option/Option");
 const DefaultController_1 = require("../controller/DefaultController");
 const Run_1 = require("./Run");
-const FilledOption_1 = require("../option/FilledOption");
 const cmd_1 = require("../command/cmd");
 const defaultCommands_1 = require("../command/defaultCommands");
+const helperFunctions_1 = require("./helperFunctions");
+let find = require('lodash.find');
 class hornet extends Run_1.Run {
     constructor() {
         super(...arguments);
         this.nextCommand = undefined;
     }
+    findDefaultCommand() {
+        let defaultCommand = find(this.commands, { '_default': true }) ||
+            find(this.defaultCommands, { '_default': true });
+        if (!defaultCommand)
+            throw new Error('No default starting command for unknown reason. Error #1102');
+        // Doesn't work, so i'll just do it in Command.default()
+        defaultCommand._sub = [];
+        defaultCommand._hidden = true;
+        defaultCommand._passThrough = false;
+        return new cmd_1.cmd(this, {}, defaultCommand);
+    }
     async run() {
         let self = this;
+        this.nextCommand = this.findDefaultCommand();
         while (true) {
             if (self.nextCommand) {
                 if (self.nextCommand.isInput()) {
@@ -54,12 +67,25 @@ class hornet extends Run_1.Run {
             userInput = this.getUserInput();
             command = new cmd_1.cmd(this, { 'command': userInput });
         }
-        let [commandName, options] = FilledOption_1.FilledOption.decompose(command.input);
-        let activeCmd = Command_1.Command.find(commandName, activeCommands, true);
-        let validOptions = Option_1.Option.validOptions(options, activeCmd._options);
+        let returnObj = Option_1.Option.decompose(command.input);
+        let activeCmd = Command_1.Command.find(returnObj.command, activeCommands);
+        let validOptions;
+        if (activeCmd) {
+            validOptions = Option_1.Option.validOptions(activeCmd, returnObj);
+        }
+        else {
+            activeCmd = self.getErrorCommand();
+            validOptions = { 'error': 'Command not found' };
+        }
         command.command = activeCmd;
         command.options = validOptions;
         await this.runCommand(command);
+    }
+    getErrorCommand() {
+        let errorCommand = find(this.defaultCommands, { '_name': 'error' });
+        if (!errorCommand)
+            throw new Error("Error encountered but default error command wasn't found.");
+        return errorCommand;
     }
     async runCommand(command) {
         let self = this;
@@ -68,10 +94,6 @@ class hornet extends Run_1.Run {
         let activeCommand = command.command;
         this.nextCommand = await this.controllers[activeCommand._controller][activeCommand._method](command.options);
         this.printLineSeparator();
-    }
-    commandNotFound() {
-        console.log('Command not found');
-        process.exit(); // breakpoint
     }
     /**
      * Register controllers so they can be accessed in the property 'controllers' - a literal object with all
@@ -92,6 +114,9 @@ class hornet extends Run_1.Run {
      * In app.ts user passes an array of their app's commands.
      * This is a setter + it adds a 'path' to all the nested commands.
      *
+     * Also, it does some extra stuff that needs to be done after user has defined
+     * all the commands.
+     *
      * @example in app.ts user writes something like
      * CLI.setCommands([
      *   command
@@ -107,6 +132,11 @@ class hornet extends Run_1.Run {
         this.commands = commands;
         this.addPath(commands);
         this.defaultCommands = defaultCommands_1.defaultCommands;
+        /**
+         * - remove duplicate array arguments
+         * - put array argument at the end of the _arguments
+         */
+        Command_1.Command.arrangeArguments(helperFunctions_1.flatten(this.commands, '_sub'));
     }
     /**
      * Recursive function to add array with path to this particular object (i.e. the sequence of keys to access the object)

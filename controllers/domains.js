@@ -1,10 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const controller_1 = require("../controller/controller");
-let rootRequire = require('root-require');
-let CompanyType = rootRequire('node/mongoose/models/companyTypes');
-let Domain = rootRequire('node/mongoose/models/domains');
-var includes = require('lodash/includes');
+var includes = require('lodash.includes');
 class domains extends controller_1.controller {
     constructor(hornet) {
         super(hornet);
@@ -13,72 +10,28 @@ class domains extends controller_1.controller {
          */
         this.name = 'domains';
     }
-    create() {
-        let domain = this.readline('Insert domain name to add: ').trim();
-        if (domain === '') {
-            console.log('Type in a domain name');
-            this.create();
-        }
-        this.domains.push(domain);
-        return new this.cmd(this.hornet, { 'name': 'domain-detail', 'options': {
-                'name': domain
+    a1(options) {
+        this.log('Heisann!');
+        let tilstand = this.readline('Hvordan har du det?');
+        this.log('Tilstanden din er: ' + tilstand, 'magenta');
+        this.traverseForward();
+    }
+    a2(options) {
+        this.makePassThrough();
+        return this.cmd({ 'name': 'a3', options: {
+                dog: true,
+                cat: 10,
+                man: 'listen'
             } });
+        this.log('Next level');
+        let tilstand = this.readline('Hvordan gammel er du a?');
+        this.log('Alderen din er: ' + tilstand, 'green');
+        this.traverseForward();
     }
-    detail(options) {
-        let name = options.name || null;
-        if (name) {
-            if (includes(this.session.get('domains'), name)) {
-                console.log(`Found domain ${name}, showing details:`);
-                this.traverseForward();
-                return;
-            }
-            else {
-                console.log(`Couldn't find domain ${name}.`);
-                let newName = this.readline("Try to input a different domain name or type 'exit' to go back.");
-                if (newName === 'exit') {
-                    return new this.cmd(this.hornet, { 'name': 'list-domains' });
-                }
-                else {
-                    this.detail({ 'name': newName });
-                }
-            }
-        }
-        else {
-            console.log('No name passed.');
-            return new this.cmd(this.hornet, { 'name': 'list-domains' });
-        }
-    }
-    async list() {
-        let self = this;
-        function printDomains(items) {
-            for (let item of items) {
-                console.log(item);
-            }
-        }
-        if (this.session.get('domains')) {
-            printDomains(this.session.get('domains'));
-        }
-        else {
-            return new Promise((resolve, reject) => {
-                console.log('Loading...');
-                setTimeout(async () => {
-                    var domains = await Domain.find({});
-                    self.session.set('domains', []);
-                    for (let domain of domains) {
-                        self.session.get('domains').push(domain.name);
-                        console.log(domain.name);
-                    }
-                    self.traverseForward();
-                    resolve(undefined);
-                }, 1000);
-            });
-        }
-    }
-    delete(options) {
-        return new this.cmd(this.hornet, { 'name': 'signin' });
-    }
-    update(options) {
-        return new this.cmd(this.hornet, { 'name': 'list-domains' });
+    a3(options) {
+        this.log('Neste level hehe');
+        let tilstand = this.readline('Hva driver du med om dagen?');
+        this.log('Du driver med: ' + tilstand, 'red');
     }
 }
 exports.domains = domains;

@@ -14,7 +14,7 @@ class controller {
         /**
          * cmd class
          */
-        this.cmd = cmd_1.cmd;
+        this._cmd = cmd_1.cmd;
         /**
          * chalk object for colored text
          */
@@ -25,10 +25,34 @@ class controller {
         return this.hornet.session;
     }
     /**
+     * Log
+     */
+    log(output, color, inline = false, print = true) {
+        if (color) {
+            output = this.chalk[color](output);
+        }
+        if (inline) {
+            if (print)
+                process.stdout.write(output);
+        }
+        else {
+            if (print)
+                console.log(output);
+            output += '\n';
+        }
+        this.hornet.breadcrumb[this.hornet.breadcrumb.length - 1].output += output;
+    }
+    makePassThrough() {
+        this.hornet.breadcrumb.pop();
+    }
+    /**
      * Some useful getters that might be used in controllers
      */
     getPath() {
         return this.hornet.path;
+    }
+    cmd(obj) {
+        return new this._cmd(this.hornet, obj);
     }
     /**
      * Print available commands (again)
@@ -56,13 +80,17 @@ class controller {
      * @return          string         - user input
      */
     readline(question, color, trim = true) {
-        if (color) {
+        if (color)
             question = this.chalk[color](question);
-        }
         let inp = readlineSync.question(question);
+        this.log(question, undefined, true, false);
+        this.log(inp, undefined, false, false);
         if (trim)
             inp = inp.trim();
         return inp;
+    }
+    color(text, color) {
+        return this.chalk[color](text);
     }
     /**
      * Same as readline, but returns boolean. True if 'Y', else false
@@ -73,8 +101,8 @@ class controller {
     readlineYN(question, trim = true) {
         let inp = readlineSync.question(question);
         if (trim)
-            inp = inp.trim();
-        return inp === 'Y';
+            inp = inp.trim().toLowerCase();
+        return inp === 'y';
     }
     /**
      * Add name of current command to 'path' so that the next "available commands" printed

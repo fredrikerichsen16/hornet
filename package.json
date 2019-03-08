@@ -1,6 +1,6 @@
 {
-  "name": "hornet",
-  "version": "1.0.0",
+  "name": "hornet-cli",
+  "version": "1.0.4",
   "description": "Command line interface (CLI) building library for Node.js which supports nesting.",
   "main": "hornet.js",
   "scripts": {
@@ -10,18 +10,18 @@
     "node.js",
     "cli"
   ],
-  "author": "Fredrik E. Skjelvik",
+  "author": "Fredrik Erichsen Skjelvik",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^10.12.19"
   },
   "dependencies": {
     "chalk": "^2.4.2",
-    "lodash": "^4.17.11",
-    "mongoose": "^5.4.13",
-    "mongoose-slug-generator": "^1.0.4",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.find": "^4.6.0",
+    "lodash.findlast": "^4.6.0",
+    "lodash.includes": "^4.3.0",
     "readline-sync": "^1.4.9",
-    "root-require": "^0.3.1",
     "typescript": "^3.3.1",
     "typescript-require": "^0.2.10"
   }

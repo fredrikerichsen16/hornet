@@ -8,17 +8,37 @@ import {Option} from '../option/Option';
 import {controller} from '../controller/controller';
 import {DefaultController} from '../controller/DefaultController';
 import {Run} from './Run';
-import {FilledOption} from '../option/FilledOption';
 import {cmd} from '../command/cmd';
 import * as types from './types';
 import {defaultCommands} from '../command/defaultCommands';
+import {flatten} from './helperFunctions';
+let find = require('lodash.find');
 
 export class hornet extends Run {
 
     nextCommand ?: cmd = undefined;
 
+    findDefaultCommand() : cmd
+    {
+        let defaultCommand : Command | undefined =
+                             find(this.commands, {'_default': true}) ||
+                             find(this.defaultCommands, {'_default': true});
+
+        if(!defaultCommand)
+            throw new Error('No default starting command for unknown reason. Error #1102');
+
+        // Doesn't work, so i'll just do it in Command.default()
+        defaultCommand._sub = [];
+        defaultCommand._hidden = true;
+        defaultCommand._passThrough = false;
+
+        return new cmd(this, {}, defaultCommand);
+    }
+
     async run() {
         let self = this;
+
+        this.nextCommand = this.findDefaultCommand();
 
         while(true)
         {
@@ -68,14 +88,27 @@ export class hornet extends Run {
             command = new cmd(this, {'command': userInput});
         }
 
-        let [commandName, options] = FilledOption.decompose(<string> command.input);
-        let activeCmd = <Command> Command.find(commandName, activeCommands, true);
-        let validOptions = Option.validOptions(options, activeCmd._options);
+        let returnObj = Option.decompose(<string> command.input);
+        let activeCmd = <Command> Command.find(returnObj.command, activeCommands);
+        let validOptions;
+        if(activeCmd) {
+            validOptions = Option.validOptions(activeCmd, returnObj);
+        } else {
+            activeCmd = self.getErrorCommand();
+            validOptions = {'error': 'Command not found'};
+        }
 
         command.command = activeCmd;
         command.options = validOptions;
 
         await this.runCommand(command);
+    }
+
+    getErrorCommand() {
+        let errorCommand = find(this.defaultCommands, {'_name': 'error'});
+        if(!errorCommand) throw new Error("Error encountered but default error command wasn't found.");
+
+        return errorCommand;
     }
 
     async runCommand(command : cmd)
@@ -89,13 +122,8 @@ export class hornet extends Run {
         let activeCommand = <Command> command.command;
 
         this.nextCommand = await this.controllers[activeCommand._controller][activeCommand._method](command.options);
-        this.printLineSeparator();
-    }
 
-    commandNotFound()
-    {
-        console.log('Command not found');
-        process.exit(); // breakpoint
+        this.printLineSeparator();
     }
 
     /**
@@ -120,6 +148,9 @@ export class hornet extends Run {
      * In app.ts user passes an array of their app's commands.
      * This is a setter + it adds a 'path' to all the nested commands.
      *
+     * Also, it does some extra stuff that needs to be done after user has defined
+     * all the commands.
+     *
      * @example in app.ts user writes something like
      * CLI.setCommands([
      *   command
@@ -134,8 +165,13 @@ export class hornet extends Run {
     setCommands(commands : Command[]) : void {
         this.commands = commands;
         this.addPath(commands);
-
         this.defaultCommands = defaultCommands;
+
+        /**
+         * - remove duplicate array arguments
+         * - put array argument at the end of the _arguments
+         */
+        Command.arrangeArguments(flatten(this.commands, '_sub'));
     }
 
     /**
