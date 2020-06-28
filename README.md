@@ -1,15 +1,7 @@
 # hornet-cli
 
 ### Command line interface (CLI) building library for Node.js which supports nesting.
-
-# Lmaooooo
-Just realized this got 55 downloads in a day. I don't know if those are real downloads or some bug/weird situation..
-
-But this project is not 100% finished. I'll finish it soon. I just published it here for my own use.
-- Error handling is shit, but if you write decent code and don't do anything weird it's fine.
-- Missing some features.
-
-For now I'll add some documentation. Will improve it soon.
+This CLI library is almost completed. All the features below in the example are working. There may be some bugs.
 
 # Why is this useful?
 Because none of the other CLI libraries support nested commands.
