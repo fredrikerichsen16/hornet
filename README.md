@@ -1,18 +1,26 @@
 # hornet-cli
 
 ### Command line interface (CLI) building library for Node.js which supports nesting.
-This CLI library is almost completed. All the features below in the example are working. There may be some bugs.
+This CLI library is almost completed. All the features below in the example are working. There may be some bugs. The code is a bit spaghetti.
 
 # Why is this useful?
-Because none of the other CLI libraries support nested commands.
+Because none of the other CLI libraries I found support nested commands.
 
-You can make a basic CLI app to make an admin panel for your web app for example (do database queries, inserts/updates etc.)
+The primary use case is creating a basic admin panel for your application I reckon. It may also be useful for simple personal projects.
+I made this because I was making a side project with complicated database relations that I needed to do CRUD operations on (mainly insert a lot of data). Using the database GUI tool or code would be too tedious, and making an admin panel web client would be too time consuming.
+
+# Upcoming features
+Feel free to contribute these features or to the project in general.
+- middleware
+- defining functions directly in the app structure instead of .action('controller.method')
+- support other input types than pure text. E.g. Select from a list of options, and autocomplete. Like Inquirer.js
 
 # Example
+Hopefully the example code below is good enough to get started. I might get around to writing documentation one day.
+
 ### Define app structure
 ```
 import {hornet, command} from "hornet-cli/imports/main";
-
 
 // controllers
 import {authentication} from './controllers/authentication';
@@ -149,7 +157,3 @@ export class users extends controller {
     ...
 }
 ```
-
-# Upcoming features
-- middleware
-- defining functions directly in the app structure instead of .action('controller.method')
